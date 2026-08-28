@@ -75,6 +75,7 @@ critical_php_files=(
 required_release_files=(
   .htaccess
   index.php
+  admin/controller/.htaccess
   image/.htaccess
   image/catalog/.htaccess
   system/.htaccess
@@ -241,6 +242,9 @@ rsync -a \
   --exclude='/tools/' \
   --exclude='/sql/' \
   --exclude='/_ocmod/' \
+  --exclude='/_packages/' \
+  --exclude='/_incident/' \
+  --exclude='/incident-*' \
   --exclude='/image/catalog/' \
   --exclude='/image/cache/' \
   --exclude='/system/storage/cache/' \

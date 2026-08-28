@@ -3,28 +3,56 @@
 	<!-- OpenCart refreshes OCMOD records by name. Keep this name after the core GLS modification. -->
 	<name>ZZZ - GLS Locker Disable COD for Bebes (after core)</name>
 	<code>gls_locker_disable_cod_bebes</code>
-	<version>1.0.1</version>
+	<version>1.0.2</version>
 	<author>Codex</author>
 
 	<file path="catalog/controller/checkout/shipping_method.php|catalog/controller/quickcheckout/shipping_method.php">
 		<operation>
 			<search><![CDATA[$this->session->data['gls'] = strip_tags($this->request->post['gls']);]]></search>
 			<add position="after"><![CDATA[
-			$this->session->data['gls_type'] = isset($this->request->post['gls_type']) ? strip_tags($this->request->post['gls_type']) : '';
+				$gls_type = isset($this->request->post['gls_type']) ? strtolower(trim(strip_tags($this->request->post['gls_type']))) : '';
 
-			if ($this->session->data['gls_type'] == 'parcel-locker' && isset($this->session->data['payment_method']['code']) && $this->session->data['payment_method']['code'] == 'cod') {
-				unset($this->session->data['payment_method']);
-			}
+				if (!in_array($gls_type, array('parcel-locker', 'parcel-shop'), true)) {
+					$gls_type = '';
+				}
+
+				if ($gls_type != 'parcel-locker' && !empty($this->session->data['gls']) && (stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false || stripos($this->session->data['gls'], 'parcelloc') !== false)) {
+					$gls_type = 'parcel-locker';
+				}
+
+				$this->session->data['gls_type'] = $gls_type;
+
+				if ($this->session->data['gls_type'] == 'parcel-locker') {
+					unset($this->session->data['payment_methods']['cod']);
+
+					if (isset($this->session->data['payment_method']['code']) && $this->session->data['payment_method']['code'] == 'cod') {
+						unset($this->session->data['payment_method']);
+					}
+				}
 ]]></add>
 		</operation>
 		<operation>
 			<search><![CDATA[$this->session->data['gls'] = isset($this->request->post['gls']) ? strip_tags($this->request->post['gls']) : (isset($this->session->data['gls']) ? $this->session->data['gls'] : '');]]></search>
 			<add position="after"><![CDATA[
-				$this->session->data['gls_type'] = isset($this->request->post['gls_type']) ? strip_tags($this->request->post['gls_type']) : (isset($this->session->data['gls_type']) ? $this->session->data['gls_type'] : '');
+					$gls_type = isset($this->request->post['gls_type']) ? strtolower(trim(strip_tags($this->request->post['gls_type']))) : (isset($this->session->data['gls_type']) ? $this->session->data['gls_type'] : '');
 
-				if ($this->session->data['gls_type'] == 'parcel-locker' && isset($this->session->data['payment_method']['code']) && $this->session->data['payment_method']['code'] == 'cod') {
-					unset($this->session->data['payment_method']);
-				}
+					if (!in_array($gls_type, array('parcel-locker', 'parcel-shop'), true)) {
+						$gls_type = '';
+					}
+
+					if ($gls_type != 'parcel-locker' && !empty($this->session->data['gls']) && (stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false || stripos($this->session->data['gls'], 'parcelloc') !== false)) {
+						$gls_type = 'parcel-locker';
+					}
+
+					$this->session->data['gls_type'] = $gls_type;
+
+					if ($this->session->data['gls_type'] == 'parcel-locker') {
+						unset($this->session->data['payment_methods']['cod']);
+
+						if (isset($this->session->data['payment_method']['code']) && $this->session->data['payment_method']['code'] == 'cod') {
+							unset($this->session->data['payment_method']);
+						}
+					}
 ]]></add>
 		</operation>
 		<operation>
@@ -91,13 +119,27 @@
 		</operation>
 		<operation>
 			<search><![CDATA[$('input[name=\'gls\']').val(gls).trigger('change');]]></search>
-			<add position="after"><![CDATA[
+			<add position="before"><![CDATA[
 		$('input[name=\'gls_type\']').val(glsType);
 ]]></add>
 		</operation>
 		<operation>
 			<search><![CDATA[data: { gls: gls },]]></search>
 			<add position="replace"><![CDATA[data: { gls: gls, gls_type: glsType },]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[data: { gls: gls, gls_type: glsType },]]></search>
+			<add position="after"><![CDATA[
+			success: function() {
+				var addressId = $('#payment-address select[name=\'address_id\']').val();
+
+				if (addressId && typeof reloadPaymentMethodById == 'function') {
+					reloadPaymentMethodById(addressId);
+				} else if (typeof reloadPaymentMethod == 'function') {
+					reloadPaymentMethod();
+				}
+			},
+]]></add>
 		</operation>
 	</file>
 
@@ -156,23 +198,70 @@
 		var glsType = getGlsPointType(point);
 ]]></add>
 		</operation>
-		<operation>
-			<search><![CDATA[$('#shipping-method input[name=\'gls\']').val(gls).trigger('change');]]></search>
-			<add position="after"><![CDATA[
+			<operation>
+				<search><![CDATA[$('#shipping-method input[name=\'gls\']').val(gls).trigger('change');]]></search>
+			<add position="before"><![CDATA[
 		$('#shipping-method input[name=\'gls_type\']').val(glsType);
-
-		if (typeof reloadPaymentMethod == 'function') {
-			reloadPaymentMethod();
-		}
 ]]></add>
 		</operation>
 		<operation>
 			<search><![CDATA[data: { gls: gls },]]></search>
 			<add position="replace"><![CDATA[data: { gls: gls, gls_type: glsType },]]></add>
 		</operation>
-	</file>
+			<operation>
+				<search><![CDATA[data: { gls: gls, gls_type: glsType },]]></search>
+				<add position="after"><![CDATA[
+				success: function(json) {
+					if (!json || !json['success']) {
+						$('#gls-error').show();
+						return;
+					}
 
-	<file path="catalog/controller/checkout/payment_method.php|catalog/controller/quickcheckout/payment_method.php">
+					<?php if (!$logged) { ?>
+					if (typeof reloadPaymentMethod == 'function') {
+						reloadPaymentMethod();
+					}
+					<?php } else { ?>
+					var paymentAddress = $('#payment-address input[name=\'payment_address\']:checked').val();
+					var addressId = $('#payment-address select[name=\'address_id\']').val();
+
+					if (paymentAddress != 'new' && addressId && typeof reloadPaymentMethodById == 'function') {
+						reloadPaymentMethodById(addressId);
+					} else if (typeof reloadPaymentMethod == 'function') {
+						reloadPaymentMethod();
+					}
+					<?php } ?>
+				},
+]]></add>
+			</operation>
+		</file>
+
+		<file path="catalog/view/theme/basel/template/quickcheckout/checkout.tpl">
+			<operation>
+				<search><![CDATA[data: $('#shipping-method select, #shipping-method input[type=\'radio\']:checked, #shipping-method textarea, #shipping-method input[type=\'text\']'),]]></search>
+				<add position="replace"><![CDATA[data: $('#shipping-method select, #shipping-method input[type=\'radio\']:checked, #shipping-method input[type=\'hidden\'], #shipping-method textarea, #shipping-method input[type=\'text\']'),]]></add>
+			</operation>
+		</file>
+
+		<file path="catalog/model/extension/payment/cod.php">
+			<operation>
+				<search><![CDATA[public function getMethod($address, $total) {]]></search>
+				<add position="after"><![CDATA[
+		$gls_locker = isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && isset($this->session->data['gls_type']) && $this->session->data['gls_type'] == 'parcel-locker';
+
+		if (!$gls_locker && isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && !empty($this->session->data['gls'])) {
+			$gls_locker = stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false || stripos($this->session->data['gls'], 'parcelloc') !== false;
+		}
+
+		if ($gls_locker) {
+			return array();
+		}
+
+]]></add>
+			</operation>
+		</file>
+
+		<file path="catalog/controller/checkout/payment_method.php|catalog/controller/quickcheckout/payment_method.php">
 		<operation>
 			<search><![CDATA[array_multisort($sort_order, SORT_ASC, $method_data);]]></search>
 			<add position="after"><![CDATA[
@@ -180,7 +269,7 @@
 			$gls_locker = isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && isset($this->session->data['gls_type']) && $this->session->data['gls_type'] == 'parcel-locker';
 
 			if (!$gls_locker && isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && !empty($this->session->data['gls'])) {
-				$gls_locker = stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false;
+				$gls_locker = stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false || stripos($this->session->data['gls'], 'parcelloc') !== false;
 			}
 
 			if ($gls_locker) {
@@ -198,7 +287,7 @@
 		$gls_locker = isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && isset($this->session->data['gls_type']) && $this->session->data['gls_type'] == 'parcel-locker';
 
 		if (!$gls_locker && isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && !empty($this->session->data['gls'])) {
-			$gls_locker = stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false;
+			$gls_locker = stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false || stripos($this->session->data['gls'], 'parcelloc') !== false;
 		}
 
 		if ($gls_locker && isset($this->request->post['payment_method']) && $this->request->post['payment_method'] == 'cod') {
@@ -217,7 +306,7 @@
 			$gls_locker = isset($this->session->data['gls_type']) && $this->session->data['gls_type'] == 'parcel-locker';
 
 			if (!$gls_locker && !empty($this->session->data['gls'])) {
-				$gls_locker = stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false;
+				$gls_locker = stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false || stripos($this->session->data['gls'], 'parcelloc') !== false;
 			}
 
 			if ($gls_locker) {

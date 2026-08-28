@@ -87,7 +87,8 @@ admin i pregledajte svaki OCMOD/VQMod zapis. Za GLS je live baza već potvrdila
 glavni `GLS Croatia Shipping for Bebes Basel QuickCheckout` v1.0.2. Njega
 ostavite uključenog. Obrišite stari `Bebes GLS Locker Disable COD` v1.0.0 pa u
 **Extensions → Installer** učitajte pregledani
-`_packages/gls_locker_disable_cod_bebes_v1.0.1.ocmod.zip` iz releasea. U
+`_ocmod/gls_locker_disable_cod_bebes_v1.0.2.ocmod.xml` iz releasea. Za ovu
+OpenCart 2.3 instalaciju učitajte izravno `.ocmod.xml`, ne ZIP. U
 **Extensions → Modifications** novi naziv mora biti
 `ZZZ - GLS Locker Disable COD for Bebes (after core)`, uključen i ispod glavnog
 GLS zapisa. Zasebni UPC patch ne instalirajte: pravilo `UPC=1` već je u glavnom

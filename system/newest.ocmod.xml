@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- /**
+ * Sort By Newest.
+ *
+ * The Sort By Newest is an extension for CMS Opencart 3.x.
+ * It changes the default product sorting method to "sort by newest".
+ * Available both for categories and manufacturers page.
+ *
+ * @author		Andrii Burkatskyi aka underr underr.ua@gmail.com
+ * @copyright	Copyright (c) 2018-2019 Andrii Burkatskyi
+ * @license		https://raw.githubusercontent.com/underr-ua/ocmod3-sort-by-newest/master/LICENSE.txt MIT
+ *
+ * @version		2.0
+ *
+ * @see			https://www.opencart.com/index.php?route=marketplace/extension/info&extension_id=33523
+ * @see			https://underr.space/notes/projects/project-003.html
+ * @see			https://github.com/underr-ua/ocmod3-sort-by-newest
+ */ -->
+
+<modification>
+	<name>[underr] Sort By Newest</name>
+	<code>sort-by-newest</code>
+	<version>2.0</version>
+	<author>Andrii Burkatskyi aka underr</author>
+	<link>https://github.com/underr-ua/ocmod3-sort-by-newest/</link>
+
+    <file path="catalog/controller/product/category.php" error="log">
+        <operation error="log">
+            <search><![CDATA[$sort = 'p.sort_order';]]></search>
+            <add position="replace"><![CDATA[$sort = 'p.date_added';]]></add>
+        </operation>
+
+        <operation error="log">
+            <search><![CDATA[p.sort_order-ASC]]></search>
+            <add position="replace"><![CDATA[p.date_added-DESC]]></add>
+        </operation>
+
+        <operation error="log">
+            <search><![CDATA[p.sort_order&order=ASC]]></search>
+            <add position="replace"><![CDATA[p.date_added&order=DESC]]></add>
+        </operation>
+
+        <operation error="log">
+            <search><![CDATA[$order = 'ASC';]]></search>
+            <add position="replace"><![CDATA[$order = 'DESC';]]></add>
+        </operation>
+    </file>
+
+
+    <file path="catalog/controller/product/manufacturer.php" error="log">
+        <operation error="log">
+            <search><![CDATA[$sort = 'p.sort_order';]]></search>
+            <add position="replace"><![CDATA[$sort = 'p.date_added';]]></add>
+        </operation>
+
+        <operation error="log">
+            <search><![CDATA[p.sort_order-ASC]]></search>
+            <add position="replace"><![CDATA[p.date_added-DESC]]></add>
+        </operation>
+
+        <operation error="log">
+            <search><![CDATA[p.sort_order&order=ASC]]></search>
+            <add position="replace"><![CDATA[p.date_added&order=DESC]]></add>
+        </operation>
+
+        <operation error="log">
+            <search><![CDATA[$order = 'ASC';]]></search>
+            <add position="replace"><![CDATA[$order = 'DESC';]]></add>
+        </operation>
+    </file>
+</modification>

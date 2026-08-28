@@ -1,0 +1,63 @@
+User-agent: *
+
+# Blokiranje filtera i parametara
+Disallow: /*?limit
+Disallow: /*&limit
+Disallow: /*?sort
+Disallow: /*&sort
+Disallow: /*?order
+Disallow: /*&order
+Disallow: /*?price
+Disallow: /*&price
+Disallow: /*?brand_tabletpc
+Disallow: /*&brand_tabletpc
+Disallow: /*?color_default
+Disallow: /*&color_default
+Disallow: /*?filter_tag
+Disallow: /*&filter_tag
+Disallow: /*?mode
+Disallow: /*&mode
+Disallow: /*?cat
+Disallow: /*&cat
+Disallow: /*?dir
+Disallow: /*&dir
+Disallow: /*?color
+Disallow: /*&color
+Disallow: /*?product_id
+Disallow: /*&product_id
+Disallow: /*?minprice
+Disallow: /*&minprice
+Disallow: /*?maxprice
+Disallow: /*&maxprice
+Disallow: /*?tag=
+Disallow: /*?keyword
+Disallow: /*?av
+Disallow: /*&attribute
+Disallow: /*?_tf_ajax=
+Disallow: /*&_tf_ajax=
+Disallow: /*&create=1
+
+# Checkout / account / system
+Disallow: /*?route=checkout/
+Disallow: /*?route=account/
+Disallow: /*?route=affiliate/
+Disallow: /*?route=extension
+Disallow: /*?route=module
+
+# Search i dinamičke stranice
+Disallow: /*?route=product/search
+Disallow: /*?route=product/category
+Disallow: /*?route=product/compare
+
+# Admin i system
+Disallow: /admin/
+Disallow: /system/
+
+# Pagination
+Disallow: /*page=
+
+# Kontakt stranica
+Disallow: /?route=information/contact
+
+# Sitemap
+Sitemap: https://atelierbebes.com/sitemap.xml

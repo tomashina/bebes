@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+	<name>Discount Percent (accurate 2 decimals)</name>
+	<code>ribbon_discount</code>
+	<version>2.4.0</version>
+	<author>GreekOC (patched by Tomislav)</author>
+	<date>2025.10.07</date>
+
+	<!-- Precizan izračun s dvije decimale: round(...,2) -->
+
+	<file path="catalog/controller/extension/module/bestseller.php">
+		<operation>
+			<search><![CDATA[$data['products'][] = array(]]></search>
+			<add position="after"><![CDATA['percent' => ($result['price']>0 && $result['special']>0 && $result['special']<$result['price']) ? ('-' . round((($result['price'] - $result['special']) / $result['price']) * 100, 2) . ' %') : '',]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/extension/module/featured.php">
+		<operation>
+			<search><![CDATA[$data['products'][] = array(]]></search>
+			<add position="after"><![CDATA['percent' => ($product_info['price']>0 && $product_info['special']>0 && $product_info['special']<$product_info['price']) ? ('-' . round((($product_info['price'] - $product_info['special']) / $product_info['price']) * 100, 2) . ' %') : '',]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/extension/module/latest.php">
+		<operation>
+			<search><![CDATA[$data['products'][] = array(]]></search>
+			<add position="after"><![CDATA['percent' => ($result['price']>0 && $result['special']>0 && $result['special']<$result['price']) ? ('-' . round((($result['price'] - $result['special']) / $result['price']) * 100, 2) . ' %') : '',]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/extension/module/special.php">
+		<operation>
+			<search><![CDATA[$data['products'][] = array(]]></search>
+			<add position="after"><![CDATA['percent' => ($result['price']>0 && $result['special']>0 && $result['special']<$result['price']) ? ('-' . round((($result['price'] - $result['special']) / $result['price']) * 100, 2) . ' %') : '',]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/product/category.php">
+		<operation>
+			<search><![CDATA[$data['products'][] = array(]]></search>
+			<add position="after"><![CDATA['percent' => ($result['price']>0 && $result['special']>0 && $result['special']<$result['price']) ? ('-' . round((($result['price'] - $result['special']) / $result['price']) * 100, 2) . ' %') : '',]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/product/manufacturer.php">
+		<operation>
+			<search><![CDATA[$data['products'][] = array(]]></search>
+			<add position="after"><![CDATA['percent' => ($result['price']>0 && $result['special']>0 && $result['special']<$result['price']) ? ('-' . round((($result['price'] - $result['special']) / $result['price']) * 100, 2) . ' %') : '',]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/product/search.php">
+		<operation>
+			<search><![CDATA[$data['products'][] = array(]]></search>
+			<add position="after"><![CDATA['percent' => ($result['price']>0 && $result['special']>0 && $result['special']<$result['price']) ? ('-' . round((($result['price'] - $result['special']) / $result['price']) * 100, 2) . ' %') : '',]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/product/special.php">
+		<operation>
+			<search><![CDATA[$data['products'][] = array(]]></search>
+			<add position="after"><![CDATA['percent' => ($result['price']>0 && $result['special']>0 && $result['special']<$result['price']) ? ('-' . round((($result['price'] - $result['special']) / $result['price']) * 100, 2) . ' %') : '',]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/product/product.php">
+		<operation>
+			<search><![CDATA[if ((float)$product_info['special']) {]]></search>
+			<add position="after"><![CDATA[$data['percent'] = ($product_info['price']>0 && $product_info['special']>0 && $product_info['special']<$product_info['price']) ? ('-' . round((($product_info['price'] - $product_info['special']) / $product_info['price']) * 100, 2) . ' %') : '';]]></add>
+		</operation>
+
+		<operation>
+			<search><![CDATA[$data['products'][] = array(]]></search>
+			<add position="after"><![CDATA['percent' => ($result['price']>0 && $result['special']>0 && $result['special']<$result['price']) ? ('-' . round((($result['price'] - $result['special']) / $result['price']) * 100, 2) . ' %') : '',]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/product/compare.php">
+		<operation>
+			<search><![CDATA[$data['products'][$product_id] = array(]]></search>
+			<add position="after"><![CDATA['percent' => ($product_info['price']>0 && $product_info['special']>0 && $product_info['special']<$product_info['price']) ? ('-' . round((($product_info['price'] - $product_info['special']) / $product_info['price']) * 100, 2) . ' %') : '',]]></add>
+		</operation>
+	</file>
+
+	<!-- VIEW TEMPLATE BADGES -->
+	<file path="catalog/view/theme/*/template/extension/module/bestseller.tpl">
+		<operation>
+			<search><![CDATA[<div class="caption">]]></search>
+			<add position="before"><![CDATA[<?php if ($product['special']) { ?><div class="ribbon"><span><?php echo $product['percent']; ?></span></div><?php } ?>]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/view/theme/*/template/extension/module/featured.tpl">
+		<operation>
+			<search><![CDATA[<div class="caption">]]></search>
+			<add position="before"><![CDATA[<?php if ($product['special']) { ?><div class="ribbon"><span><?php echo $product['percent']; ?></span></div><?php } ?>]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/view/theme/*/template/extension/module/latest.tpl">
+		<operation>
+			<search><![CDATA[<div class="caption">]]></search>
+			<add position="before"><![CDATA[<?php if ($product['special']) { ?><div class="ribbon"><span><?php echo $product['percent']; ?></span></div><?php } ?>]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/view/theme/*/template/extension/module/special.tpl">
+		<operation>
+			<search><![CDATA[<div class="caption">]]></search>
+			<add position="before"><![CDATA[<?php if ($product['special']) { ?><div class="ribbon"><span><?php echo $product['percent']; ?></span></div><?php } ?>]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/view/theme/*/template/product/manufacturer_info.tpl">
+		<operation>
+			<search><![CDATA[<div class="caption">]]></search>
+			<add position="after"><![CDATA[<?php if ($product['special']) { ?><div class="ribbon"><span><?php echo $product['percent']; ?></span></div><?php } ?>]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/view/theme/*/template/product/compare.tpl">
+		<operation>
+			<search><![CDATA[<strike><?php echo $product['price']; ?></strike> <?php echo $product['special']; ?>]]></search>
+			<add position="after"><![CDATA[<span style="color:red;float:right"><?php echo $product['percent']; ?></span>]]></add>
+		</operation>
+	</file>
+
+</modification>

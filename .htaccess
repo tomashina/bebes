@@ -1,0 +1,88 @@
+DirectoryIndex index.php
+Options +FollowSymlinks
+Options -Indexes
+ServerSignature Off
+
+# Do not expose templates, runtime configuration, logs, database exports or
+# editor/backup files if the PHP handler or a rewrite rule is misconfigured.
+<FilesMatch "(?i)^(?:config\.php|composer\.(?:json|lock)|\.env(?:\..*)?|\.user\.ini|php\.ini|error_log)$">
+  Require all denied
+</FilesMatch>
+
+<FilesMatch "(?i)^(?!robots\.txt$).+\.(?:tpl|ini|log|sql|sqlite|bak|old|orig|save|swp|dist|sh|md|ya?ml)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_authz_core.c>
+  <LimitExcept GET POST HEAD>
+    Require all denied
+  </LimitExcept>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+  <LimitExcept GET POST HEAD>
+    Order allow,deny
+    Deny from all
+  </LimitExcept>
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header unset Access-Control-Allow-Origin
+  Header unset Access-Control-Allow-Headers
+  Header unset Access-Control-Allow-Methods
+  Header always unset Access-Control-Allow-Origin
+  Header always unset Access-Control-Allow-Headers
+  Header always unset Access-Control-Allow-Methods
+  Header always unset X-Powered-By
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set Strict-Transport-Security "max-age=15552000"
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/gif "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType font/woff "access plus 1 month"
+  ExpiresByType font/woff2 "access plus 1 month"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/plain text/css text/javascript application/javascript application/json application/xml image/svg+xml
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Allow certificate validation, but deny other hidden paths.
+  RewriteRule "(^|/)\.(?!well-known(?:/|$))" - [F,L]
+
+  # Canonical production origin. X-Forwarded-Proto avoids a loop behind a TLS proxy.
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+  RewriteRule ^ https://atelierbebes.com%{REQUEST_URI} [R=301,L,NE]
+
+  RewriteCond %{HTTP_HOST} !^atelierbebes\.com$ [NC]
+  RewriteRule ^ https://atelierbebes.com%{REQUEST_URI} [R=301,L,NE]
+
+  # Preserve the Nitro CSS/JS delivery URLs used by the live theme.
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(assets/.+)\.css$ assets/serveFile.php?t=css&l=4&p=$1&c=604800 [NC,L,QSA]
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(assets/.+)\.js$ assets/serveFile.php?t=js&l=4&p=$1&c=604800 [NC,L,QSA]
+
+  RewriteRule ^sitemap\.xml$ index.php?route=extension/feed/google_sitemap [L,QSA]
+  RewriteRule ^googlebase\.xml$ index.php?route=extension/feed/google_base [L,QSA]
+  RewriteRule ^system/download/ index.php?route=error/not_found [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^([^?]*) index.php?_route_=$1 [L,QSA]
+</IfModule>

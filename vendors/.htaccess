@@ -1,0 +1,9 @@
+# Site-specific vendor jobs are CLI-only and are not public endpoints.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

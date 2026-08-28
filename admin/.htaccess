@@ -1,0 +1,26 @@
+# Do not opt authenticated admin responses into cross-origin browser access, and
+# do not accept WebDAV-style methods.
+<IfModule mod_headers.c>
+  Header unset Access-Control-Allow-Origin
+  Header unset Access-Control-Allow-Headers
+  Header unset Access-Control-Allow-Methods
+  Header always unset Access-Control-Allow-Origin
+  Header always unset Access-Control-Allow-Headers
+  Header always unset Access-Control-Allow-Methods
+  Header always set X-Frame-Options "DENY"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "same-origin"
+</IfModule>
+
+<IfModule mod_authz_core.c>
+  <LimitExcept GET POST HEAD>
+    Require all denied
+  </LimitExcept>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+  <LimitExcept GET POST HEAD>
+    Order allow,deny
+    Deny from all
+  </LimitExcept>
+</IfModule>

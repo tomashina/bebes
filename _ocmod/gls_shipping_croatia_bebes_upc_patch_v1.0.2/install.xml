@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<name>GLS Croatia Shipping UPC Rule Patch for Bebes</name>
+	<code>gls_shipping_croatia_bebes_upc_rule</code>
+	<version>1.0.2</version>
+	<author>Codex</author>
+
+	<file path="admin/language/hr-hr/catalog/product.php">
+		<operation>
+			<search><![CDATA[$_['entry_upc']              = 'UPC (Universal Product Code - bar code)';]]></search>
+			<add position="replace"><![CDATA[$_['entry_upc']              = 'GLS';]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$_['help_upc']               = 'Univerzalni kod artikla';]]></search>
+			<add position="replace"><![CDATA[$_['help_upc']               = 'Upiši 1 ako je artikl dozvoljen za GLS dostavu. Prazno ili druga vrijednost blokira GLS za košaricu.';]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/language/en-gb/catalog/product.php">
+		<operation>
+			<search><![CDATA[$_['entry_upc']              = 'UPC';]]></search>
+			<add position="replace"><![CDATA[$_['entry_upc']              = 'GLS';]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$_['help_upc']               = 'Universal Product Code';]]></search>
+			<add position="replace"><![CDATA[$_['help_upc']               = 'Enter 1 if this product is allowed for GLS shipping. Empty or any other value blocks GLS for carts containing it.';]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/language/en-gb/catalog/product_ext.php">
+		<operation>
+			<search><![CDATA[$_['column_upc'] = 'UPC';]]></search>
+			<add position="replace"><![CDATA[$_['column_upc'] = 'GLS';]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/checkout/confirm.php">
+		<operation>
+			<search><![CDATA[// Validate minimum quantity requirements.]]></search>
+			<add position="before"><![CDATA[
+		if (isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls') {
+			$gls_product_ids = array();
+
+			foreach ($this->cart->getProducts() as $gls_product) {
+				if (!empty($gls_product['shipping'])) {
+					$gls_product_ids[(int)$gls_product['product_id']] = (int)$gls_product['product_id'];
+				}
+			}
+
+			if ($gls_product_ids) {
+				$gls_allowed_query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "product WHERE product_id IN (" . implode(',', $gls_product_ids) . ") AND TRIM(upc) = '1'");
+
+				if ((int)$gls_allowed_query->row['total'] !== count($gls_product_ids)) {
+					unset($this->session->data['shipping_method']);
+					unset($this->session->data['gls']);
+					$redirect = $this->url->link('checkout/checkout', '', true);
+				}
+			}
+		}
+
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/quickcheckout/confirm.php">
+		<operation>
+			<search><![CDATA[// Validate minimum quantity requirements.]]></search>
+			<add position="before"><![CDATA[
+		if (isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls') {
+			$gls_product_ids = array();
+
+			foreach ($this->cart->getProducts() as $gls_product) {
+				if (!empty($gls_product['shipping'])) {
+					$gls_product_ids[(int)$gls_product['product_id']] = (int)$gls_product['product_id'];
+				}
+			}
+
+			if ($gls_product_ids) {
+				$gls_allowed_query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "product WHERE product_id IN (" . implode(',', $gls_product_ids) . ") AND TRIM(upc) = '1'");
+
+				if ((int)$gls_allowed_query->row['total'] !== count($gls_product_ids)) {
+					unset($this->session->data['shipping_method']);
+					unset($this->session->data['gls']);
+					$redirect = $this->url->link('checkout/checkout', '', true);
+				}
+			}
+		}
+
+]]></add>
+		</operation>
+	</file>
+</modification>

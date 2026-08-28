@@ -1,0 +1,9 @@
+# VQMod XML, generated cache and installer files are not public web content.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

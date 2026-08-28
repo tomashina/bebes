@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<name>Bebes Return Termination Text</name>
+	<code>bebes_return_termination_text</code>
+	<version>1.0.0</version>
+	<author>Codex</author>
+	<link>https://atelierbebes.com</link>
+
+	<file path="catalog/language/hr-hr/account/return.php">
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['heading_title'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['heading_title']      = 'Jednostrani raskid ugovora';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_return'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_return']        = 'Jednostrani raskid ugovora';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_return_detail'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_return_detail'] = 'Detalji jednostranog raskida ugovora';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_description'\]\s*=\s*'.*?';~s]]></search>
+			<add position="replace"><![CDATA[$_['text_description']   = '<p>Molimo popunite podatke za povrat artikala. Nakon slanja obrasca primit ćete potvrdu na e-mail.</p><p>Potrošač ima pravo na jednostrani raskid ugovora u roku od 14 dana od primitka robe bez navođenja razloga.</p>';]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/language/hr-hr/common/footer.php|catalog/language/hr-hr/extension/module/account.php">
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_return'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_return']       = 'Jednostrani raskid ugovora';]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/language/en-gb/account/return.php">
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['heading_title'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['heading_title']      = 'Unilateral Contract Termination';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_return'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_return']        = 'Unilateral Contract Termination';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_return_detail'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_return_detail'] = 'Unilateral contract termination details';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_description'\]\s*=\s*'.*?';~s]]></search>
+			<add position="replace"><![CDATA[$_['text_description']   = '<p>Please complete the return form. After sending it, you will receive confirmation by e-mail.</p><p>The consumer has the right to unilaterally terminate the contract within 14 days of receiving the goods without giving a reason.</p>';]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/language/en-gb/common/footer.php|catalog/language/en-gb/extension/module/account.php">
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_return'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_return']       = 'Unilateral Contract Termination';]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/language/hr-hr/common/header.php|admin/language/hr-hr/common/column_left.php">
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_return'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_return']                    = 'Jednostrani raskid ugovora';]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/language/hr-hr/sale/return.php">
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['heading_title'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['heading_title']       = 'Jednostrani raskid ugovora';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_success'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_success']        = 'Uspješno: Napravili ste promjene u jednostranom raskidu ugovora!';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_list'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_list']           = 'Popis/lista zahtjeva za jednostrani raskid ugovora';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_add'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_add']            = 'Dodaj zahtjev za jednostrani raskid ugovora';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_edit'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_edit']           = 'Izmijeni zahtjev za jednostrani raskid ugovora';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['error_permission'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['error_permission']    = 'Upozorenje: Nemate ovlasti mijenjati jednostrani raskid ugovora!';]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/language/en-gb/common/header.php|admin/language/en-gb/common/column_left.php">
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_return'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_return']                    = 'Unilateral Contract Termination';]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/language/en-gb/sale/return.php">
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['heading_title'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['heading_title']       = 'Unilateral Contract Termination';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_success'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_success']        = 'Success: You have modified unilateral contract termination requests!';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_list'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_list']           = 'Unilateral Contract Termination Request List';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_add'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_add']            = 'Add Unilateral Contract Termination Request';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['text_edit'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['text_edit']           = 'Edit Unilateral Contract Termination Request';]]></add>
+		</operation>
+		<operation>
+			<search regex="true" limit="1"><![CDATA[~\$_\['error_permission'\]\s*=\s*'[^']*';~]]></search>
+			<add position="replace"><![CDATA[$_['error_permission']    = 'Warning: You do not have permission to modify unilateral contract termination requests!';]]></add>
+		</operation>
+	</file>
+</modification>

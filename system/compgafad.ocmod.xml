@@ -1,0 +1,254 @@
+<modification>
+<name>|<b>OCT</b>| Complete Google Universal Analytics + GA4 + Adwords</name>
+<author>opencarttools@gmail.com</author>
+<version>2.X - 3.X</version>
+<link>http://opencarttools.net/document.php?extid=28307</link>
+<code>28307</code>
+<file path="admin/controller/setting/*.php">
+	<operation error="skip">
+		<search position="before"><![CDATA[$data['countries'] =]]></search>
+		<add position="before"><![CDATA[$data['compgafad_html'] = '';
+		if(file_exists('model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['compgafad_html'] = $this->model_extension_compgafad->gethtml(isset($store_info) ? $store_info : array());
+		}]]></add>
+	</operation>
+</file>
+<file path="admin/view/template/setting/*.*">
+	<operation error="skip">
+		<search position="after"><![CDATA[id="tab-option"]]></search>
+		<add position="after"><![CDATA[<?php echo $compgafad_html; ?>]]></add>
+	</operation>
+</file>
+
+<file path="catalog/controller/common/header.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['google_analytics'] =]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['google_analytics'] .= $this->model_extension_compgafad->pageview();
+		}]]></add> 
+	</operation>
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['analytics'] = array();]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['analytics'][] = $this->model_extension_compgafad->pageview();
+		}]]></add> 
+	</operation>				 
+</file>
+<file path="catalog/controller/account/login.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['footer'] =]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['footer'] .= $this->model_extension_compgafad->login();
+		}]]></add>
+	</operation> 
+</file>
+<file path="catalog/controller/account/success.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['text_message'] =]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['text_message'] .= $this->model_extension_compgafad->sign_up();
+		}]]></add>
+	</operation> 
+</file>
+<file path="catalog/controller/information/contact.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['footer'] =]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['footer'] .= $this->model_extension_compgafad->contact();
+		}]]></add>
+	</operation> 
+</file>	
+<file path="catalog/controller/checkout/cart.php">
+	<operation error="skip">
+		<search position="after" index="0"><![CDATA[$json['total'] =]]></search>
+		<add position="after" index="0"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$compgafad_atcw = $this->model_extension_compgafad->atcw($this->request->post['product_id'], $quantity, 1);
+			$json['success'] .= $compgafad_atcw;
+			if(isset($json['notification']['message'])) { $json['notification']['message'] .= $compgafad_atcw; }
+		}]]></add>
+	</operation>
+</file>
+<file path="catalog/controller/account/wishlist.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$json['success'] = sprintf($this->language->get('text_success')]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$compgafad_atcw = $this->model_extension_compgafad->atcw($this->request->post['product_id'], 1, 2);
+			$json['success'] .= $compgafad_atcw;
+			if(isset($json['notification']['message'])) { $json['notification']['message'] .= $compgafad_atcw; }
+		}]]></add>
+	</operation> 
+</file>
+<file path="catalog/controller/product/product.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['footer'] =]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php') && isset($this->request->get['product_id'])) { 
+			$this->load->model('extension/compgafad');
+			$data['footer'] .= $this->model_extension_compgafad->viewcont($this->request->get['product_id']);
+		}]]></add>
+	</operation> 
+</file>
+<file path="catalog/controller/product/category.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['footer'] =]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php') && isset($this->request->get['path'])) { 
+			$this->load->model('extension/compgafad');
+			$data['footer'] .= $this->model_extension_compgafad->viewcategory($this->request->get['path']);
+		}]]></add>
+	</operation> 
+</file>
+<file path="catalog/controller/product/search.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['footer'] =]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php') && isset($this->request->get['search'])) { 
+			$this->load->model('extension/compgafad');
+			$data['footer'] .= $this->model_extension_compgafad->search($this->request->get['search']);
+		}]]></add>
+	</operation> 
+</file>
+<file path="catalog/controller/checkout/cart.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['footer'] =]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['footer'] .= $this->model_extension_compgafad->viewcart();
+		}]]></add>
+	</operation> 
+</file>
+<file path="catalog/controller/checkout/checkout.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['footer'] =]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['footer'] .= $this->model_extension_compgafad->beginchk();
+		}]]></add>
+	</operation> 
+</file>
+<!-- checkout funnel -->	 
+<file path="catalog/controller/checkout/guest.php|catalog/controller/checkout/register.php|catalog/controller/checkout/payment_address.php">
+	<operation error="skip">
+		<search position="before"><![CDATA[$this->load->view]]></search>
+		<add position="before"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['text_your_details'] = $this->language->get('text_your_details');
+			$data['text_your_details'] .= $this->model_extension_compgafad->chkfunnel(1);
+			
+			$data['text_address_existing'] = $this->language->get('text_address_existing');
+			$data['text_address_existing'] .= $this->model_extension_compgafad->chkfunnel(1); 
+		}]]></add>
+	</operation> 
+</file>	 
+<file path="catalog/controller/checkout/shipping_method.php">
+	<operation error="skip">
+		<search position="before"><![CDATA[$this->load->view]]></search>
+		<add position="before"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['text_shipping_method'] = $this->language->get('text_shipping_method');
+			$data['text_shipping_method'] .= $this->model_extension_compgafad->chkfunnel(2);
+			$data['text_shipping_method'] .= $this->model_extension_compgafad->chkfunnel(3);
+		}]]></add>
+	</operation> 
+</file>
+<file path="catalog/controller/checkout/payment_method.php">
+	<operation error="skip">
+		<search position="before"><![CDATA[$this->load->view]]></search>
+		<add position="before"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['text_payment_method'] = $this->language->get('text_payment_method');
+			$data['text_payment_method'] .= $this->model_extension_compgafad->chkfunnel(4);
+		}]]></add>
+	</operation> 
+</file>
+<file path="catalog/controller/checkout/confirm.php">
+	<operation error="skip">
+		<search position="before"><![CDATA[$this->load->view]]></search>
+		<add position="before"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['column_name'] = $this->language->get('column_name');
+			$data['column_name'] .= $this->model_extension_compgafad->chkfunnel(5);
+			$data['column_name'] .= $this->model_extension_compgafad->addshpinfo();
+			$data['column_name'] .= $this->model_extension_compgafad->addpayinfo();				
+		}]]></add>
+	</operation> 
+</file>
+<!-- J3 -->
+<file path="catalog/controller/journal3/checkout.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['footer'] =]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['footer'] .= $this->model_extension_compgafad->beginchk();
+			$data['footer'] .= $this->model_extension_compgafad->chkfunnel(1);
+			$data['footer'] .= $this->model_extension_compgafad->chkfunnel(2);
+			$data['footer'] .= $this->model_extension_compgafad->chkfunnel(3);
+			$data['footer'] .= $this->model_extension_compgafad->chkfunnel(4);
+			$data['footer'] .= $this->model_extension_compgafad->chkfunnel(5);
+			$data['footer'] .= $this->model_extension_compgafad->addshpinfo();
+			$data['footer'] .= $this->model_extension_compgafad->addpayinfo();
+		}]]></add>
+	</operation> 
+</file>
+<file path="catalog/controller/checkout/success.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[function index]]></search>
+		<add position="after"><![CDATA[$data['compgafad_code'] = '';
+		if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['compgafad_code'] = $this->model_extension_compgafad->purchase();
+		}]]></add>
+	</operation> 
+	<operation error="skip">
+		<search position="after"><![CDATA[$data['footer'] =]]></search>
+		<add position="after"><![CDATA[$data['footer'] .= $data['compgafad_code'];]]></add>
+	</operation>
+</file>
+
+<!-- xtensions -->	
+<file path="catalog/controller/extension/module/xtensions/checkout/xheader.php|catalog/controller/extension/module/xtensions/checkout/xsuccess_header.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$this->data['analytics'] = array();]]></search>
+		<add position="after"><![CDATA[if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$this->data['analytics'][] = $this->model_extension_compgafad->pageview();
+		}]]></add>
+	</operation>				  
+</file>
+<file path="catalog/controller/extension/module/xtensions/checkout/xfooter.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[function index]]></search>
+		<add position="after"><![CDATA[$this->data['compgafad_beginchk'] = '';
+		if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$this->data['compgafad_beginchk'] = $this->model_extension_compgafad->beginchk();
+		}]]></add>
+	</operation> 
+</file>
+<file path="catalog/view/theme/default/template/extension/module/xtensions/checkout/xfooter.*">
+	<operation error="skip">
+		<search position="before"><![CDATA[<footer]]></search>
+		<add position="before"><![CDATA[<?php echo $compgafad_beginchk; ?>]]></add>
+	</operation> 
+</file>
+				
+<file path="catalog/controller/extension/module/xtensions_success.php">
+	<operation error="skip">
+		<search position="after"><![CDATA[$order_id = $this->session->data['xsuccess_order_id'];]]></search>
+		<add position="after"><![CDATA[$data['compgafad_code'] = '';
+		if(file_exists('catalog/model/extension/compgafad.php')) { 
+			$this->load->model('extension/compgafad');
+			$data['compgafad_code'] = $this->model_extension_compgafad->purchase($order_id);
+		}]]></add>
+	</operation>
+	<operation error="skip">
+		<search position="after"><![CDATA[$this->data['xfooter'] =]]></search>
+		<add position="after"><![CDATA[$this->data['xfooter'] .= $this->data['compgafad_code'];]]></add>
+	</operation> 
+</file>
+</modification>

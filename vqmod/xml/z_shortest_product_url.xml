@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+    <id>Shortest Product URL</id>
+    <version>1.0</version>
+    <vqmver>2.6.1</vqmver>
+    <author>Custom</author>
+
+    <!-- Cilj: za product/product maknuti "path" parametar
+         da URL bude uvijek samo /slug-artikla -->
+    <file name="catalog/controller/startup/seo_url.php">
+        <operation>
+            <search><![CDATA[parse_str($url_info['query'], $data);]]></search>
+            <add position="after"><![CDATA[
+                // SHORT PRODUCT URL PATCH (vQmod)
+                if (isset($data['route']) && $data['route'] == 'product/product' && isset($data['path'])) {
+                    unset($data['path']);
+                }
+            ]]></add>
+        </operation>
+    </file>
+</modification>

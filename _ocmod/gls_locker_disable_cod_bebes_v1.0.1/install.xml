@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<!-- OpenCart refreshes OCMOD records by name. Keep this name after the core GLS modification. -->
+	<name>ZZZ - GLS Locker Disable COD for Bebes (after core)</name>
+	<code>gls_locker_disable_cod_bebes</code>
+	<version>1.0.1</version>
+	<author>Codex</author>
+
+	<file path="catalog/controller/checkout/shipping_method.php|catalog/controller/quickcheckout/shipping_method.php">
+		<operation>
+			<search><![CDATA[$this->session->data['gls'] = strip_tags($this->request->post['gls']);]]></search>
+			<add position="after"><![CDATA[
+			$this->session->data['gls_type'] = isset($this->request->post['gls_type']) ? strip_tags($this->request->post['gls_type']) : '';
+
+			if ($this->session->data['gls_type'] == 'parcel-locker' && isset($this->session->data['payment_method']['code']) && $this->session->data['payment_method']['code'] == 'cod') {
+				unset($this->session->data['payment_method']);
+			}
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$this->session->data['gls'] = isset($this->request->post['gls']) ? strip_tags($this->request->post['gls']) : (isset($this->session->data['gls']) ? $this->session->data['gls'] : '');]]></search>
+			<add position="after"><![CDATA[
+				$this->session->data['gls_type'] = isset($this->request->post['gls_type']) ? strip_tags($this->request->post['gls_type']) : (isset($this->session->data['gls_type']) ? $this->session->data['gls_type'] : '');
+
+				if ($this->session->data['gls_type'] == 'parcel-locker' && isset($this->session->data['payment_method']['code']) && $this->session->data['payment_method']['code'] == 'cod') {
+					unset($this->session->data['payment_method']);
+				}
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[unset($this->session->data['gls']);]]></search>
+			<add position="after"><![CDATA[
+			unset($this->session->data['gls_type']);
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$data['gls_filter_type'] = $this->config->get('gls_filter_type');]]></search>
+			<add position="before"><![CDATA[
+		$data['gls_type'] = isset($this->session->data['gls_type']) ? $this->session->data['gls_type'] : '';
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/view/theme/default/template/checkout/shipping_method.tpl">
+		<operation>
+			<search><![CDATA[<input type="text" name="gls" class="form-control" value="<?php echo $gls; ?>" id="gls" readonly="readonly" placeholder="Odabrani GLS ParcelShop / paketomat" />]]></search>
+			<add position="after"><![CDATA[
+      <input type="hidden" name="gls_type" value="<?php echo $gls_type; ?>" id="gls-type" />
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[function formatGlsPoint(point) {]]></search>
+			<add position="before"><![CDATA[
+	function getGlsPointType(point) {
+		var type = '';
+
+		if (point) {
+			type = point.type || point.pointType || point.locationType || '';
+
+			if (!type && point.name && (point.name.toLowerCase().indexOf('paketomat') !== -1 || point.name.toLowerCase().indexOf('locker') !== -1)) {
+				type = 'parcel-locker';
+			}
+		}
+
+		type = String(type).toLowerCase();
+
+		if (type.indexOf('locker') !== -1 || type.indexOf('paketomat') !== -1) {
+			return 'parcel-locker';
+		}
+
+		if (type.indexOf('shop') !== -1) {
+			return 'parcel-shop';
+		}
+
+		return type;
+	}
+
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$('input[name=\'gls\']').val('');]]></search>
+			<add position="after"><![CDATA[
+			$('input[name=\'gls_type\']').val('');
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[var gls = formatGlsPoint(point);]]></search>
+			<add position="after"><![CDATA[
+		var glsType = getGlsPointType(point);
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$('input[name=\'gls\']').val(gls).trigger('change');]]></search>
+			<add position="after"><![CDATA[
+		$('input[name=\'gls_type\']').val(glsType);
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[data: { gls: gls },]]></search>
+			<add position="replace"><![CDATA[data: { gls: gls, gls_type: glsType },]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/view/theme/default/template/checkout/checkout.tpl">
+		<operation>
+			<search><![CDATA[data: $('#collapse-shipping-method input[type=\'radio\']:checked, #collapse-shipping-method textarea'),]]></search>
+			<add position="replace"><![CDATA[data: $('#collapse-shipping-method input[type=\'radio\']:checked, #collapse-shipping-method input[type=\'hidden\'], #collapse-shipping-method textarea'),]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/view/theme/basel/template/quickcheckout/shipping_method.tpl">
+		<operation>
+			<search><![CDATA[<input type="text" name="gls" class="form-control" value="<?php echo $gls; ?>" id="gls" readonly="readonly" placeholder="Odabrani GLS ParcelShop / paketomat" />]]></search>
+			<add position="after"><![CDATA[
+        <input type="hidden" name="gls_type" value="<?php echo $gls_type; ?>" id="gls-type" />
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[function formatGlsPoint(point) {]]></search>
+			<add position="before"><![CDATA[
+	function getGlsPointType(point) {
+		var type = '';
+
+		if (point) {
+			type = point.type || point.pointType || point.locationType || '';
+
+			if (!type && point.name && (point.name.toLowerCase().indexOf('paketomat') !== -1 || point.name.toLowerCase().indexOf('locker') !== -1)) {
+				type = 'parcel-locker';
+			}
+		}
+
+		type = String(type).toLowerCase();
+
+		if (type.indexOf('locker') !== -1 || type.indexOf('paketomat') !== -1) {
+			return 'parcel-locker';
+		}
+
+		if (type.indexOf('shop') !== -1) {
+			return 'parcel-shop';
+		}
+
+		return type;
+	}
+
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$('#shipping-method input[name=\'gls\']').val('');]]></search>
+			<add position="after"><![CDATA[
+			$('#shipping-method input[name=\'gls_type\']').val('');
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[var gls = formatGlsPoint(point);]]></search>
+			<add position="after"><![CDATA[
+		var glsType = getGlsPointType(point);
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$('#shipping-method input[name=\'gls\']').val(gls).trigger('change');]]></search>
+			<add position="after"><![CDATA[
+		$('#shipping-method input[name=\'gls_type\']').val(glsType);
+
+		if (typeof reloadPaymentMethod == 'function') {
+			reloadPaymentMethod();
+		}
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[data: { gls: gls },]]></search>
+			<add position="replace"><![CDATA[data: { gls: gls, gls_type: glsType },]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/checkout/payment_method.php|catalog/controller/quickcheckout/payment_method.php">
+		<operation>
+			<search><![CDATA[array_multisort($sort_order, SORT_ASC, $method_data);]]></search>
+			<add position="after"><![CDATA[
+
+			$gls_locker = isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && isset($this->session->data['gls_type']) && $this->session->data['gls_type'] == 'parcel-locker';
+
+			if (!$gls_locker && isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && !empty($this->session->data['gls'])) {
+				$gls_locker = stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false;
+			}
+
+			if ($gls_locker) {
+				unset($method_data['cod']);
+
+				if (isset($this->session->data['payment_method']['code']) && $this->session->data['payment_method']['code'] == 'cod') {
+					unset($this->session->data['payment_method']);
+				}
+			}
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[if (!isset($this->request->post['payment_method'])) {]]></search>
+			<add position="before"><![CDATA[
+		$gls_locker = isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && isset($this->session->data['gls_type']) && $this->session->data['gls_type'] == 'parcel-locker';
+
+		if (!$gls_locker && isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && !empty($this->session->data['gls'])) {
+			$gls_locker = stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false;
+		}
+
+		if ($gls_locker && isset($this->request->post['payment_method']) && $this->request->post['payment_method'] == 'cod') {
+			$json['error']['warning'] = $this->language->get('error_payment');
+		}
+
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/checkout/confirm.php|catalog/controller/quickcheckout/confirm.php">
+		<operation>
+			<search><![CDATA[// Validate minimum quantity requirements.]]></search>
+			<add position="before"><![CDATA[
+		if (isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && isset($this->session->data['payment_method']['code']) && $this->session->data['payment_method']['code'] == 'cod') {
+			$gls_locker = isset($this->session->data['gls_type']) && $this->session->data['gls_type'] == 'parcel-locker';
+
+			if (!$gls_locker && !empty($this->session->data['gls'])) {
+				$gls_locker = stripos($this->session->data['gls'], 'paketomat') !== false || stripos($this->session->data['gls'], 'locker') !== false;
+			}
+
+			if ($gls_locker) {
+				unset($this->session->data['payment_method']);
+				$redirect = $this->url->link('checkout/checkout', '', true);
+			}
+		}
+
+]]></add>
+		</operation>
+	</file>
+</modification>

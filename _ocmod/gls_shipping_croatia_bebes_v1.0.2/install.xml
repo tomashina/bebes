@@ -1,0 +1,733 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<name>GLS Croatia Shipping for Bebes Basel QuickCheckout</name>
+	<code>gls_shipping_croatia_bebes</code>
+	<version>1.0.2</version>
+	<author>Codex</author>
+	<link>https://api.mygls.hr</link>
+
+	<file path="admin/language/hr-hr/catalog/product.php">
+		<operation>
+			<search><![CDATA[$_['entry_upc']              = 'UPC (Universal Product Code - bar code)';]]></search>
+			<add position="replace"><![CDATA[$_['entry_upc']              = 'GLS';]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$_['help_upc']               = 'Univerzalni kod artikla';]]></search>
+			<add position="replace"><![CDATA[$_['help_upc']               = 'Upiši 1 ako je artikl dozvoljen za GLS dostavu. Prazno ili druga vrijednost blokira GLS za košaricu.';]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/language/en-gb/catalog/product.php">
+		<operation>
+			<search><![CDATA[$_['entry_upc']              = 'UPC';]]></search>
+			<add position="replace"><![CDATA[$_['entry_upc']              = 'GLS';]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$_['help_upc']               = 'Universal Product Code';]]></search>
+			<add position="replace"><![CDATA[$_['help_upc']               = 'Enter 1 if this product is allowed for GLS shipping. Empty or any other value blocks GLS for carts containing it.';]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/language/en-gb/catalog/product_ext.php">
+		<operation>
+			<search><![CDATA[$_['column_upc'] = 'UPC';]]></search>
+			<add position="replace"><![CDATA[$_['column_upc'] = 'GLS';]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/language/hr-hr/checkout/checkout.php">
+		<operation>
+			<search><![CDATA[$_['error_shipping']]]></search>
+			<add position="before"><![CDATA[
+$_['error_gls']                       = 'Upozorenje: Molim odaberite GLS ParcelShop ili paketomat!';
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/language/en-gb/checkout/checkout.php">
+		<operation>
+			<search><![CDATA[$_['error_shipping']]]></search>
+			<add position="before"><![CDATA[
+$_['error_gls']                       = 'Warning: Please choose a GLS ParcelShop or locker!';
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/checkout/success.php">
+		<operation>
+			<search><![CDATA[unset($this->session->data['comment']);]]></search>
+			<add position="after"><![CDATA[
+			unset($this->session->data['gls']);
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/model/checkout/order.php">
+		<operation>
+			<search><![CDATA[public function addOrder($data) {]]></search>
+			<add position="after"><![CDATA[
+		if (!empty($data['gls'])) {
+			$this->ensureGlsColumn();
+		}
+
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$order_id = $this->db->getLastId();]]></search>
+			<add position="after"><![CDATA[
+
+		if (!empty($data['gls'])) {
+			$this->db->query("UPDATE `" . DB_PREFIX . "order` SET gls = '" . $this->db->escape($data['gls']) . "' WHERE order_id = '" . (int)$order_id . "'");
+		}
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA['shipping_code'           => $order_query->row['shipping_code'],]]></search>
+			<add position="after"><![CDATA[
+				'gls'                     => isset($order_query->row['gls']) ? $order_query->row['gls'] : '',
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[public function addOrderHistory($order_id, $order_status_id, $comment = '', $notify = false, $override = false) {]]></search>
+			<add position="before"><![CDATA[
+	private function ensureGlsColumn() {
+		$query = $this->db->query("SHOW COLUMNS FROM `" . DB_PREFIX . "order` LIKE 'gls'");
+
+		if (!$query->num_rows) {
+			$this->db->query("ALTER TABLE `" . DB_PREFIX . "order` ADD `gls` TEXT NULL AFTER `shipping_code`");
+		}
+	}
+
+	]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$data['shipping_method'] = $order_info['shipping_method'];]]></search>
+			<add position="after"><![CDATA[
+
+				if (isset($order_info['shipping_code']) && $order_info['shipping_code'] == 'gls.gls' && !empty($order_info['gls'])) {
+					$data['shipping_method'] .= '<br /><strong>GLS ParcelShop / Paketomat</strong><br /><strong>GLS:</strong> ' . htmlspecialchars($order_info['gls'], ENT_QUOTES, 'UTF-8');
+				}
+]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/model/sale/order.php">
+		<operation>
+			<search><![CDATA['shipping_code'           => $order_query->row['shipping_code'],]]></search>
+			<add position="after"><![CDATA[
+				'gls'                     => isset($order_query->row['gls']) ? $order_query->row['gls'] : '',
+]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/controller/sale/order.php">
+		<operation>
+			<search index="1"><![CDATA[$data['shipping_method'] = $order_info['shipping_method'];]]></search>
+			<add position="after"><![CDATA[
+			$data['gls'] = isset($order_info['gls']) ? $order_info['gls'] : '';
+			$data['gls_create'] = '';
+			$data['gls_shipment'] = array();
+			$data['button_gls_create_shipment'] = 'Pošalji naljepnicu u GLS';
+
+			if (isset($order_info['shipping_code']) && $order_info['shipping_code'] == 'gls.gls') {
+				$this->load->model('extension/shipping/gls');
+
+				$this->model_extension_shipping_gls->installSchema();
+
+				$data['gls_shipment'] = $this->model_extension_shipping_gls->getShipmentByOrderId($this->request->get['order_id']);
+				$data['gls_create'] = $this->url->link('extension/shipping/gls/createShipment', 'token=' . $this->session->data['token'] . '&order_id=' . (int)$this->request->get['order_id'], true);
+			}
+
+			if ($data['gls']) {
+				$data['shipping_method'] .= '<br /><small><strong>GLS:</strong> ' . htmlspecialchars($data['gls'], ENT_QUOTES, 'UTF-8') . '</small>';
+			}
+
+			if ($data['gls_create']) {
+				$data['shipping_method'] .= '<div style="margin-top:8px;">';
+
+				$gls_display_id = !empty($data['gls_shipment']['parcel_number']) ? $data['gls_shipment']['parcel_number'] : (!empty($data['gls_shipment']['parcel_id']) ? $data['gls_shipment']['parcel_id'] : '');
+
+				if ($gls_display_id) {
+					$data['shipping_method'] .= '<span class="label label-success">Poslano u GLS: ' . htmlspecialchars($gls_display_id, ENT_QUOTES, 'UTF-8') . '</span>';
+				} else {
+					$data['shipping_method'] .= '<button type="button" id="button-gls-create" data-loading-text="' . htmlspecialchars($this->language->get('text_loading'), ENT_QUOTES, 'UTF-8') . '" class="btn btn-success btn-xs"><i class="fa fa-truck"></i> ' . $data['button_gls_create_shipment'] . '</button>';
+				}
+
+				$data['shipping_method'] .= '</div>';
+			}
+]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/view/template/sale/order_info.tpl">
+		<operation>
+			<search><![CDATA[<?php echo $footer; ?>]]></search>
+			<add position="before"><![CDATA[
+<?php if (!empty($gls_create)) { ?>
+<script type="text/javascript"><!--
+$(document).delegate('#button-gls-create', 'click', function() {
+	$.ajax({
+		url: '<?php echo str_replace('&amp;', '&', $gls_create); ?>',
+		type: 'post',
+		dataType: 'json',
+		beforeSend: function() {
+			$('#button-gls-create').button('loading');
+		},
+		complete: function() {
+			$('#button-gls-create').button('reset');
+		},
+		success: function(json) {
+			$('.alert').remove();
+
+			if (json['error']) {
+				$('#content > .container-fluid').prepend('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> ' + json['error'] + '<button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+			}
+
+			if (json['success']) {
+				var success_message = json['success'];
+
+				if (json['tracking_mail']) {
+					success_message += '<br />' + json['tracking_mail'];
+				}
+
+				if (json['tracking_mail_error']) {
+					success_message += '<br />Tracking email: ' + json['tracking_mail_error'];
+				}
+
+				$('#content > .container-fluid').prepend('<div class="alert alert-success"><i class="fa fa-check-circle"></i> ' + success_message + '<button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+				$('#button-gls-create').replaceWith('<span class="label label-success">Poslano u GLS: ' + json['display_id'] + '</span>');
+			}
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});
+});
+//--></script>
+<?php } ?>
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/checkout/confirm.php">
+		<operation>
+			<search><![CDATA[// Validate minimum quantity requirements.]]></search>
+			<add position="before"><![CDATA[
+		if (isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls') {
+			if (empty($this->session->data['gls']) || stripos($this->session->data['gls'], 'undefined') !== false) {
+				$redirect = $this->url->link('checkout/checkout', '', true);
+			}
+
+			$gls_product_ids = array();
+
+			foreach ($this->cart->getProducts() as $gls_product) {
+				if (!empty($gls_product['shipping'])) {
+					$gls_product_ids[(int)$gls_product['product_id']] = (int)$gls_product['product_id'];
+				}
+			}
+
+			if ($gls_product_ids) {
+				$gls_allowed_query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "product WHERE product_id IN (" . implode(',', $gls_product_ids) . ") AND TRIM(upc) = '1'");
+
+				if ((int)$gls_allowed_query->row['total'] !== count($gls_product_ids)) {
+					unset($this->session->data['shipping_method']);
+					unset($this->session->data['gls']);
+					$redirect = $this->url->link('checkout/checkout', '', true);
+				}
+			}
+		} else {
+			unset($this->session->data['gls']);
+		}
+
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$order_data['products'] = array();]]></search>
+			<add position="before"><![CDATA[
+			$order_data['gls'] = '';
+
+			if (isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && !empty($this->session->data['gls'])) {
+				$order_data['gls'] = $this->session->data['gls'];
+			}
+
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/checkout/shipping_method.php">
+		<operation>
+			<search><![CDATA[public function save() {]]></search>
+			<add position="before"><![CDATA[
+	public function saveGlsPoint() {
+		$json = array();
+
+		if (isset($this->request->post['gls'])) {
+			$this->session->data['gls'] = strip_tags($this->request->post['gls']);
+			$json['success'] = true;
+		} else {
+			$json['error'] = true;
+		}
+
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode($json));
+	}
+
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[if (isset($this->session->data['shipping_method']['code'])) {]]></search>
+			<add position="before"><![CDATA[
+		$data['gls_available'] = false;
+
+		foreach ($data['shipping_methods'] as $shipping_method) {
+			if (!empty($shipping_method['quote'])) {
+				foreach ($shipping_method['quote'] as $quote) {
+					if (isset($quote['code']) && $quote['code'] == 'gls.gls') {
+						$data['gls_available'] = true;
+						break 2;
+					}
+				}
+			}
+		}
+
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$this->response->setOutput($this->load->view('checkout/shipping_method', $data));]]></search>
+			<add position="before"><![CDATA[
+		if (!isset($this->session->data['shipping_method']['code'])) {
+			unset($this->session->data['gls']);
+		}
+
+		if ($data['code'] != 'gls.gls') {
+			unset($this->session->data['gls']);
+		}
+
+		if ($data['code'] == 'gls.gls' && isset($this->session->data['gls'])) {
+			$data['gls'] = $this->session->data['gls'];
+		} else {
+			$data['gls'] = '';
+		}
+
+		$data['gls_filter_type'] = $this->config->get('gls_filter_type');
+		$data['error_gls'] = $this->language->get('error_gls');
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[if (!$json) {]]></search>
+			<add position="before"><![CDATA[
+		if (isset($this->request->post['shipping_method']) && $this->request->post['shipping_method'] == 'gls.gls') {
+			$gls = '';
+
+			if (isset($this->request->post['gls'])) {
+				$gls = trim(strip_tags($this->request->post['gls']));
+			} elseif (isset($this->session->data['gls'])) {
+				$gls = trim($this->session->data['gls']);
+			}
+
+			if ($gls == '' || stripos($gls, 'undefined') !== false) {
+				$json['error']['warning'] = $this->language->get('error_gls');
+			}
+		}
+
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$this->session->data['shipping_method'] = $this->session->data['shipping_methods'][$shipping[0]]['quote'][$shipping[1]];]]></search>
+			<add position="after"><![CDATA[
+
+			if ($this->request->post['shipping_method'] == 'gls.gls') {
+				$this->session->data['gls'] = isset($this->request->post['gls']) ? strip_tags($this->request->post['gls']) : (isset($this->session->data['gls']) ? $this->session->data['gls'] : '');
+			} else {
+				unset($this->session->data['gls']);
+			}
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/view/theme/default/template/checkout/shipping_method.tpl">
+		<operation>
+			<search><![CDATA[<?php echo $quote['title']; ?> - <?php echo $quote['text']; ?></label>]]></search>
+			<add position="after"><![CDATA[
+    <?php if ($quote['code'] == 'gls.gls') { ?>
+    <div id="gls-drop-parcel-shop" style="margin:10px 0 0 20px;<?php echo ($code != 'gls.gls') ? 'display:none;' : ''; ?>">
+      <button type="button" id="gls-dpm-open" class="btn btn-primary" style="margin-bottom:10px;">Odaberite GLS ParcelShop / paketomat</button>
+      <gls-dpm-dialog country="hr" id="gls-dpm-dialog"<?php echo $gls_filter_type ? ' filter-type="' . $gls_filter_type . '"' : ''; ?>></gls-dpm-dialog>
+      <input type="text" name="gls" class="form-control" value="<?php echo $gls; ?>" id="gls" readonly="readonly" placeholder="Odabrani GLS ParcelShop / paketomat" />
+      <div id="gls-error" class="text-danger" style="margin-top:5px;<?php echo $gls ? 'display:none;' : ''; ?>"><?php echo $error_gls; ?></div>
+    </div>
+    <?php } ?>
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[<div class="buttons">]]></search>
+			<add position="before"><![CDATA[
+<?php if ($gls_available) { ?>
+<script type="text/javascript"><!--
+(function($) {
+	function isGlsSelected() {
+		return $('input[name=\'shipping_method\']:checked').val() == 'gls.gls';
+	}
+
+	function toggleGls() {
+		if (isGlsSelected()) {
+			$('#gls-drop-parcel-shop').show();
+			$('#gls-error').toggle(!$('input[name=\'gls\']').val());
+		} else {
+			$('#gls-drop-parcel-shop').hide();
+			$('#gls-error').hide();
+		}
+	}
+
+	function formatGlsPoint(point) {
+		var contact = point && point.contact ? point.contact : {};
+		var location = $.trim(((contact.postalCode || '') + ' ' + (contact.city || '')).replace(/\s+/g, ' '));
+		var parts = [];
+
+		if (location) {
+			parts.push(location);
+		}
+
+		if (contact.address) {
+			parts.push(contact.address);
+		}
+
+		if (point && point.name) {
+			parts.push(point.name);
+		}
+
+		return parts.join(', ') + ';' + (point && point.id ? point.id : '');
+	}
+
+	function saveGlsPoint(point) {
+		var gls = formatGlsPoint(point);
+
+		if (!point || !point.id) {
+			$('input[name=\'gls\']').val('');
+			$('#gls-error').show();
+			return;
+		}
+
+		$('input[name=\'gls\']').val(gls).trigger('change');
+		$('#gls-error').hide();
+
+		$.ajax({
+			url: 'index.php?route=checkout/shipping_method/saveGlsPoint',
+			type: 'post',
+			data: { gls: gls },
+			dataType: 'json'
+		});
+	}
+
+	$(document).ready(function() {
+		toggleGls();
+		$('input[name=\'shipping_method\']').on('change', toggleGls);
+
+		$(document).off('click.glsShipping', '#gls-dpm-open').on('click.glsShipping', '#gls-dpm-open', function() {
+			var dialog = document.getElementById('gls-dpm-dialog');
+
+			if (dialog && dialog.showModal) {
+				dialog.showModal();
+			}
+		});
+
+		var dialog = document.getElementById('gls-dpm-dialog');
+
+		if (dialog && !dialog._bebesGlsBound) {
+			dialog.addEventListener('change', function(event) {
+				saveGlsPoint(event.detail);
+			});
+
+			dialog._bebesGlsBound = true;
+		}
+	});
+
+	if (!document.querySelector('script[data-bebes-gls-dpm]')) {
+		var e = document.createElement('script');
+		e.type = 'module';
+		e.src = 'https://map.gls-hungary.com/widget/gls-dpm.js';
+		e.setAttribute('data-bebes-gls-dpm', '1');
+		document.getElementsByTagName('head')[0].appendChild(e);
+	}
+})(jQuery);
+//--></script>
+<?php } ?>
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/quickcheckout/confirm.php">
+		<operation>
+			<search><![CDATA[// Validate minimum quantity requirements.]]></search>
+			<add position="before"><![CDATA[
+		if (isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls') {
+			if (empty($this->session->data['gls']) || stripos($this->session->data['gls'], 'undefined') !== false) {
+				$redirect = $this->url->link('checkout/checkout', '', true);
+			}
+
+			$gls_product_ids = array();
+
+			foreach ($this->cart->getProducts() as $gls_product) {
+				if (!empty($gls_product['shipping'])) {
+					$gls_product_ids[(int)$gls_product['product_id']] = (int)$gls_product['product_id'];
+				}
+			}
+
+			if ($gls_product_ids) {
+				$gls_allowed_query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "product WHERE product_id IN (" . implode(',', $gls_product_ids) . ") AND TRIM(upc) = '1'");
+
+				if ((int)$gls_allowed_query->row['total'] !== count($gls_product_ids)) {
+					unset($this->session->data['shipping_method']);
+					unset($this->session->data['gls']);
+					$redirect = $this->url->link('checkout/checkout', '', true);
+				}
+			}
+		} else {
+			unset($this->session->data['gls']);
+		}
+
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[$order_data['products'] = array();]]></search>
+			<add position="before"><![CDATA[
+			$order_data['gls'] = '';
+
+			if (isset($this->session->data['shipping_method']['code']) && $this->session->data['shipping_method']['code'] == 'gls.gls' && !empty($this->session->data['gls'])) {
+				$order_data['gls'] = $this->session->data['gls'];
+			}
+
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/quickcheckout/shipping_method.php">
+		<operation>
+			<search><![CDATA[public function set() {]]></search>
+			<add position="before"><![CDATA[
+	public function saveGlsPoint() {
+		$json = array();
+
+		if (isset($this->request->post['gls'])) {
+			$this->session->data['gls'] = strip_tags($this->request->post['gls']);
+			$json['success'] = true;
+		} else {
+			$json['error'] = true;
+		}
+
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode($json));
+	}
+
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[// All variables]]></search>
+			<add position="before"><![CDATA[
+		$data['gls_available'] = false;
+
+		foreach ($data['shipping_methods'] as $shipping_method) {
+			if (!empty($shipping_method['quote'])) {
+				foreach ($shipping_method['quote'] as $quote) {
+					if (isset($quote['code']) && $quote['code'] == 'gls.gls') {
+						$data['gls_available'] = true;
+						break 2;
+					}
+				}
+			}
+		}
+
+		if (!isset($this->request->post['shipping_method']) && !isset($this->session->data['shipping_method']['code'])) {
+			unset($this->session->data['gls']);
+		}
+
+		if ($data['code'] != 'gls.gls') {
+			unset($this->session->data['gls']);
+		}
+
+		if ($data['code'] == 'gls.gls' && isset($this->session->data['gls'])) {
+			$data['gls'] = $this->session->data['gls'];
+		} else {
+			$data['gls'] = '';
+		}
+
+		$data['gls_filter_type'] = $this->config->get('gls_filter_type');
+		$data['error_gls'] = $this->language->get('error_gls');
+
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[if (isset($this->request->post['shipping_method']) && isset($this->session->data['shipping_methods'])) {]]></search>
+			<add position="before"><![CDATA[
+		if (isset($this->request->post['gls'])) {
+			$this->session->data['gls'] = strip_tags($this->request->post['gls']);
+		}
+
+		if (isset($this->request->post['shipping_method']) && $this->request->post['shipping_method'] != 'gls.gls') {
+			unset($this->session->data['gls']);
+		}
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[if ($this->config->get('quickcheckout_delivery_required')) {]]></search>
+			<add position="before"><![CDATA[
+		if (isset($this->request->post['shipping_method']) && $this->request->post['shipping_method'] == 'gls.gls') {
+			$gls = '';
+
+			if (isset($this->request->post['gls'])) {
+				$gls = trim(strip_tags($this->request->post['gls']));
+			} elseif (isset($this->session->data['gls'])) {
+				$gls = trim($this->session->data['gls']);
+			}
+
+			if ($gls == '' || stripos($gls, 'undefined') !== false) {
+				$json['error']['warning'] = $this->language->get('error_gls');
+			}
+		}
+
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[if (!$json) {]]></search>
+			<add position="after"><![CDATA[
+			if ($this->request->post['shipping_method'] == 'gls.gls') {
+				$this->session->data['gls'] = isset($this->request->post['gls']) ? strip_tags($this->request->post['gls']) : (isset($this->session->data['gls']) ? $this->session->data['gls'] : '');
+			} else {
+				unset($this->session->data['gls']);
+			}
+
+]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/view/theme/basel/template/quickcheckout/shipping_method.tpl">
+		<operation>
+			<search><![CDATA[<?php echo $quote['title']; ?></label>]]></search>
+			<add position="after"><![CDATA[
+      <?php if ($quote['code'] == 'gls.gls') { ?>
+      <div id="gls-drop-parcel-shop" style="margin-top:10px;<?php echo ($code != 'gls.gls') ? 'display:none;' : ''; ?>">
+        <button type="button" id="gls-dpm-open" class="btn btn-primary" style="margin-bottom:10px;">Odaberite GLS ParcelShop / paketomat</button>
+        <gls-dpm-dialog country="hr" id="gls-dpm-dialog"<?php echo $gls_filter_type ? ' filter-type="' . $gls_filter_type . '"' : ''; ?>></gls-dpm-dialog>
+        <input type="text" name="gls" class="form-control" value="<?php echo $gls; ?>" id="gls" readonly="readonly" placeholder="Odabrani GLS ParcelShop / paketomat" />
+        <div id="gls-error" class="text-danger" style="margin-top:5px;<?php echo $gls ? 'display:none;' : ''; ?>"><?php echo $error_gls; ?></div>
+      </div>
+      <?php } ?>
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[</select><br />]]></search>
+			<add position="after"><![CDATA[
+  <?php if ($gls_available) { ?>
+  <div id="gls-drop-parcel-shop" style="margin-top:10px;<?php echo ($code != 'gls.gls') ? 'display:none;' : ''; ?>">
+    <button type="button" id="gls-dpm-open" class="btn btn-primary" style="margin-bottom:10px;">Odaberite GLS ParcelShop / paketomat</button>
+    <gls-dpm-dialog country="hr" id="gls-dpm-dialog"<?php echo $gls_filter_type ? ' filter-type="' . $gls_filter_type . '"' : ''; ?>></gls-dpm-dialog>
+    <input type="text" name="gls" class="form-control" value="<?php echo $gls; ?>" id="gls" readonly="readonly" placeholder="Odabrani GLS ParcelShop / paketomat" />
+    <div id="gls-error" class="text-danger" style="margin-top:5px;<?php echo $gls ? 'display:none;' : ''; ?>"><?php echo $error_gls; ?></div>
+  </div>
+  <?php } ?>
+]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[<?php if ($delivery && (!$delivery_delivery_time || $delivery_delivery_time == '1' || $delivery_delivery_time == '3')) { ?>]]></search>
+			<add position="before"><![CDATA[
+<?php if ($gls_available) { ?>
+<script type="text/javascript"><!--
+(function($) {
+	function isGlsSelected() {
+		var selected = $('#shipping-method input[name=\'shipping_method\']:checked').val();
+
+		if (!selected) {
+			selected = $('#shipping-method select[name=\'shipping_method\']').val();
+		}
+
+		return selected == 'gls.gls';
+	}
+
+	function toggleGls() {
+		if (isGlsSelected()) {
+			$('#gls-drop-parcel-shop').show();
+			$('#gls-error').toggle(!$('#shipping-method input[name=\'gls\']').val());
+		} else {
+			$('#gls-drop-parcel-shop').hide();
+			$('#gls-error').hide();
+		}
+	}
+
+	function formatGlsPoint(point) {
+		var contact = point && point.contact ? point.contact : {};
+		var location = $.trim(((contact.postalCode || '') + ' ' + (contact.city || '')).replace(/\s+/g, ' '));
+		var parts = [];
+
+		if (location) {
+			parts.push(location);
+		}
+
+		if (contact.address) {
+			parts.push(contact.address);
+		}
+
+		if (point && point.name) {
+			parts.push(point.name);
+		}
+
+		return parts.join(', ') + ';' + (point && point.id ? point.id : '');
+	}
+
+	function saveGlsPoint(point) {
+		var gls = formatGlsPoint(point);
+
+		if (!point || !point.id) {
+			$('#shipping-method input[name=\'gls\']').val('');
+			$('#gls-error').show();
+			return;
+		}
+
+		$('#shipping-method input[name=\'gls\']').val(gls).trigger('change');
+		$('#gls-error').hide();
+
+		$.ajax({
+			url: 'index.php?route=quickcheckout/shipping_method/saveGlsPoint',
+			type: 'post',
+			data: { gls: gls },
+			dataType: 'json'
+		});
+	}
+
+	$(document).ready(function() {
+		toggleGls();
+		$('#shipping-method').on('change', 'input[name=\'shipping_method\'], select[name=\'shipping_method\']', toggleGls);
+
+		$(document).off('click.glsShipping', '#gls-dpm-open').on('click.glsShipping', '#gls-dpm-open', function() {
+			var dialog = document.getElementById('gls-dpm-dialog');
+
+			if (dialog && dialog.showModal) {
+				dialog.showModal();
+			}
+		});
+
+		var dialog = document.getElementById('gls-dpm-dialog');
+
+		if (dialog && !dialog._bebesGlsBound) {
+			dialog.addEventListener('change', function(event) {
+				saveGlsPoint(event.detail);
+			});
+
+			dialog._bebesGlsBound = true;
+		}
+	});
+
+	if (!document.querySelector('script[data-bebes-gls-dpm]')) {
+		var e = document.createElement('script');
+		e.type = 'module';
+		e.src = 'https://map.gls-hungary.com/widget/gls-dpm.js';
+		e.setAttribute('data-bebes-gls-dpm', '1');
+		document.getElementsByTagName('head')[0].appendChild(e);
+	}
+})(jQuery);
+//--></script>
+<?php } ?>
+
+]]></add>
+		</operation>
+	</file>
+</modification>

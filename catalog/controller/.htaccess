@@ -1,0 +1,10 @@
+# Controllers, including bundled library examples, must run only through the
+# OpenCart front controller so startup, routing and request checks are applied.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

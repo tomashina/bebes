@@ -660,9 +660,9 @@ class ModelCheckoutOrder extends Model {
 				$mail->setHtml($this->load->view('mail/order', $data));
 				$mail->setText($text);
 
-				$local = realpath(DIR_IMAGE . 'uvijeti-kupnje.pdf');
+				$local = realpath(DIR_IMAGE . 'uvjeti-kupnje.pdf');
 				if ($local && file_exists($local)) {
-				    $mail->addAttachment($local, 'Uvjeti-kupnje.pdf');
+					$mail->addAttachment($local);
 				}
 
 

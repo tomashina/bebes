@@ -27,6 +27,14 @@ if git -C "$repo_root" grep -nF 'bebes.test' -- ':!tools/security_preflight.sh';
   status=1
 fi
 
+shopunity_patch="$repo_root/system/library/d_shopunity/install/d_opencart_patch.xml"
+
+if grep -qF '<file path="admin/controller/common/filemanager.php">' "$shopunity_patch" || \
+   grep -qF 'image/svg+xml' "$shopunity_patch"; then
+  printf 'ERROR: the legacy Shopunity SVG file-manager patch is present.\n' >&2
+  status=1
+fi
+
 secret_material='BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|sk_live_[A-Za-z0-9]{16,}|xox[baprs]-[A-Za-z0-9-]{20,}'
 
 if git -C "$repo_root" grep -nEI "$secret_material" -- ':!tools/security_preflight.sh'; then

@@ -325,20 +325,6 @@
             ]]></add>
         </operation>
     </file>
-    <file path="admin/controller/common/filemanager.php">
-        <operation>
-            <search><![CDATA[$files = glob($directory . '/' . $filter_name . '*.{jpg,jpeg,png,gif,JPG,JPEG,PNG,GIF}', GLOB_BRACE);]]></search>
-            <add position="replace"><![CDATA[$files = glob($directory . '/' . $filter_name . '*.{jpg,jpeg,svg,png,gif,JPG,JPEG,PNG,GIF}', GLOB_BRACE);]]></add>
-        </operation>
-        <operation>
-            <search><![CDATA['jpg',]]></search>
-            <add position="after"><![CDATA['svg',]]></add>
-        </operation>
-        <operation>
-            <search><![CDATA['image/jpeg',]]></search>
-            <add position="after"><![CDATA['image/svg+xml',]]></add>
-        </operation>
-    </file>
     <file path="admin/view/template/common/filemanager.twig">
         <operation>
             <search><![CDATA[<img src="{{ image.thumb }}" alt="{{ image.name }}" title="{{ image.name }}" />]]></search>

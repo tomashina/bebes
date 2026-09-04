@@ -46,8 +46,10 @@ class ControllerCommonFileManager extends Controller {
 				$directories = array();
 			}
 
-			// Get files
-			$files = glob($directory . '/' . $filter_name . '*.{jpg,jpeg,png,gif,JPG,JPEG,PNG,GIF}', GLOB_BRACE);
+			// Get files. Keep the pattern separate so the legacy Shopunity OCMOD
+			// cannot replace this raster-only allowlist with SVG support.
+			$image_pattern = '*.{jpg,jpeg,png,gif,JPG,JPEG,PNG,GIF}';
+			$files = glob($directory . '/' . $filter_name . $image_pattern, GLOB_BRACE);
 
 			if (!$files) {
 				$files = array();
@@ -243,8 +245,10 @@ class ControllerCommonFileManager extends Controller {
 				$json['error'] = $this->language->get('error_upload');
 			}
 
-			$extensions = array('jpg', 'jpeg', 'gif', 'png');
-			$mimes = array('image/jpeg', 'image/gif', 'image/png');
+			// Double-quoted values avoid two obsolete Shopunity OCMOD searches
+			// which otherwise inject SVG entries outside these inline arrays.
+			$extensions = array("jpg", "jpeg", "gif", "png");
+			$mimes = array("image/jpeg", "image/gif", "image/png");
 			$extension_mimes = array(
 				'jpg'  => array('image/jpeg'),
 				'jpeg' => array('image/jpeg'),

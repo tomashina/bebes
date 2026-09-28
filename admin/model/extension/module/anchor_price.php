@@ -884,13 +884,28 @@ class ModelExtensionModuleAnchorPrice extends Model {
 				|| trim((string)$product['model']) === ''
 				|| empty($product['manufacturer_id'])
 				|| trim((string)$product['manufacturer']) === ''
-				|| $this->validPublicationBarcode($product) === '') {
+				|| $this->hasInvalidPublicationBarcode($product)) {
 				$total++;
 			}
 		}
 		if ($total > 0) {
-			throw new Exception($total . ' active products are missing a confirmed anchor price, name, code, brand or valid GTIN barcode. Publication was stopped.');
+			throw new Exception($total . ' active products are missing a confirmed anchor price, name, code or brand, or contain an invalid GTIN barcode. Publication was stopped.');
 		}
+	}
+
+	private function hasInvalidPublicationBarcode(array $product) {
+		foreach (array('ean', 'jan', 'isbn') as $field) {
+			$value = isset($product[$field]) ? trim((string)$product[$field]) : '';
+			if ($value === '') {
+				continue;
+			}
+
+			if (!$this->isValidGtin($value)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private function validPublicationBarcode(array $product) {

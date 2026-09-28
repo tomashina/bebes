@@ -467,13 +467,28 @@ class ModelExtensionModuleAnchorPrice extends Model {
 				|| trim((string)$product['model']) === ''
 				|| empty($product['manufacturer_id'])
 				|| trim((string)$product['manufacturer']) === ''
-				|| $this->validPublicationBarcode($product) === '') {
+				|| $this->hasInvalidPublicationBarcode($product)) {
 				$total++;
 			}
 		}
 		if ($total > 0) {
-			throw new Exception($total . ' aktivnih proizvoda nema potvrđenu sidrenu cijenu, naziv, šifru, marku ili valjani GTIN barkod. Objava je zaustavljena.');
+			throw new Exception($total . ' aktivnih proizvoda nema potvrđenu sidrenu cijenu, naziv, šifru ili marku, ili sadrži neispravan GTIN barkod. Objava je zaustavljena.');
 		}
+	}
+
+	private function hasInvalidPublicationBarcode(array $product) {
+		foreach (array('ean', 'jan', 'isbn') as $field) {
+			$value = isset($product[$field]) ? trim((string)$product[$field]) : '';
+			if ($value === '') {
+				continue;
+			}
+
+			if (!$this->isValidGtin($value)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function getPublications() {

@@ -38,7 +38,7 @@ Backfill uzima postojeće cijene iz baze. Za artikle objavljene do 10. 9. 2026. 
 
 Ne pokretati ručnu objavu i ne uključivati zakazani posao dok sve provjere nisu završene.
 
-Posebno treba riješiti barkodove. Na aktualnoj lokalnoj kopiji baze ukupno 274 aktivna artikla nema valjani GTIN za objavu: 270 nema nijedan od dopuštenih podataka `EAN`, `JAN` ili `ISBN`, a četiri imaju vrijednost koja ne prolazi strogu provjeru GTIN-a. Valjana vrijednost mora biti isključivo numerička, imati dopuštenu GTIN duljinu i ispravnu kontrolnu znamenku. Polje `UPC` se u ovoj trgovini koristi za GLS i ne smije se preuzimati kao barkod proizvoda. Prva produkcijska objava mora ostati blokirana dok se prazne i nevaljane vrijednosti ne isprave i kontrolni upit za GTIN nepravilnosti ne vrati nijedan artikl.
+Barkod nije obvezan: artikl kod kojeg su `EAN`, `JAN` i `ISBN` svi prazni smije ući u objavu. Ako je bilo koje od tih polja popunjeno, svaka upisana vrijednost mora biti valjani GTIN-8, GTIN-12, GTIN-13 ili GTIN-14: isključivo numerička, dopuštene duljine i s ispravnom kontrolnom znamenkom. Polje `UPC` se u ovoj trgovini koristi za GLS i ne smije se preuzimati kao barkod proizvoda. Kontrolni popis prikazuje samo upisane nevaljane vrijednosti i mora biti prazan prije produkcijske objave. Ako artikl nema stvarni barkod, pogrešno unesenu vrijednost treba ukloniti umjesto izmišljati GTIN.
 
 Prije prve objave također potvrditi sljedeće:
 
@@ -104,7 +104,7 @@ Nakon prvog kontroliranog pokretanja, a prije 08:00, provjeriti:
 - naziv svake datoteke sadrži vrstu prodajnog mjesta, adresu/domenu, `PJ1` odnosno `PJ3`, redni broj i vremensku oznaku;
 - datoteke se mogu preuzeti s javne stranice i otvoriti kao CSV;
 - kontrolni zbroj SHA-256 spremljene datoteke odgovara zapisu publikacije;
-- nema aktivnog artikla bez potvrđene sidrene cijene ili obveznih identifikacijskih podataka;
+- nema aktivnog artikla bez potvrđene sidrene cijene ili obveznih podataka, niti artikla s upisanim nevaljanim GTIN-om;
 - ponovno pokretanje istog dana ne stvara nepotrebne duplikate;
 - administracija i javna stranica prikazuju obje publikacije;
 - publikacije starije od 30 dana više nisu javno dostupne, dok zadnjih 30 dana ostaje dostupno.

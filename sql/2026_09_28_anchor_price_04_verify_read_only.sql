@@ -13,6 +13,7 @@
 --   * tocno 1 extension red, 4 aktivna eventa i po 1 trazeni setting
 --   * Administrator access_permission i modify_permission: OK
 --   * cron kljuc se ne ispisuje; provjeravaju se samo duljina i format
+--   * prazni EAN/JAN/ISBN podaci su dopusteni; svaki upisani GTIN mora biti valjan
 
 -- A. Okolina i potrebne tablice.
 SELECT
@@ -431,9 +432,9 @@ WHERE ap.`rule_code` = 'first_listing'
 ORDER BY ap.`reference_date`, ap.`product_id`;
 
 -- Objava se mora zaustaviti ako ijedan aktivan/listan proizvod nema potvrđenu
--- sidrenu cijenu ili obvezni naziv, šifru, marku i valjani GTIN barkod.
--- Podržani su GTIN-8, GTIN-12, GTIN-13 i GTIN-14, uz provjeru kontrolne
--- znamenke. Očekivani rezultat je 0.
+-- sidrenu cijenu ili obvezni naziv, šifru i marku. EAN/JAN/ISBN nisu obvezni,
+-- ali svaka upisana vrijednost mora biti valjani GTIN-8, GTIN-12, GTIN-13 ili
+-- GTIN-14, uključujući ispravnu kontrolnu znamenku. Očekivani rezultat je 0.
 WITH
 `active_product_data` AS (
   SELECT
@@ -474,16 +475,22 @@ WITH
     AND p.`date_available` <= CURDATE()
 ),
 `barcode_candidates` AS (
-  SELECT `product_id`, `missing_required_data`, `ean` AS `barcode` FROM `active_product_data`
-  UNION
-  SELECT `product_id`, `missing_required_data`, `jan` AS `barcode` FROM `active_product_data`
-  UNION
-  SELECT `product_id`, `missing_required_data`, `isbn` AS `barcode` FROM `active_product_data`
+  SELECT `product_id`, 'EAN' AS `barcode_field`, `ean` AS `barcode`
+  FROM `active_product_data`
+  WHERE `ean` IS NOT NULL
+  UNION ALL
+  SELECT `product_id`, 'JAN' AS `barcode_field`, `jan` AS `barcode`
+  FROM `active_product_data`
+  WHERE `jan` IS NOT NULL
+  UNION ALL
+  SELECT `product_id`, 'ISBN' AS `barcode_field`, `isbn` AS `barcode`
+  FROM `active_product_data`
+  WHERE `isbn` IS NOT NULL
 ),
 `candidate_checks` AS (
   SELECT
     candidate.`product_id`,
-    candidate.`missing_required_data`,
+    candidate.`barcode_field`,
     candidate.`barcode`,
     COALESCE(SUM(
       CAST(SUBSTRING(candidate.`barcode`, digit.`position`, 1) AS UNSIGNED)
@@ -498,31 +505,33 @@ WITH
     UNION ALL SELECT 13
   ) digit
     ON digit.`position` < CHAR_LENGTH(candidate.`barcode`)
-  GROUP BY candidate.`product_id`, candidate.`missing_required_data`, candidate.`barcode`
+  GROUP BY candidate.`product_id`, candidate.`barcode_field`, candidate.`barcode`
 ),
 `product_checks` AS (
   SELECT
     `product_id`,
-    MAX(`missing_required_data`) AS `missing_required_data`,
     MAX(
       CASE
         WHEN `barcode` REGEXP '^[0-9]{8}$|^[0-9]{12,14}$'
          AND MOD(10 - MOD(`gtin_weighted_sum`, 10), 10)
            = CAST(RIGHT(`barcode`, 1) AS UNSIGNED)
-        THEN 1 ELSE 0
+        THEN 0 ELSE 1
       END
-    ) AS `has_valid_gtin`
+    ) AS `has_invalid_gtin`
   FROM `candidate_checks`
   GROUP BY `product_id`
 )
 SELECT COUNT(*) AS `active_products_not_ready_for_publication`
-FROM `product_checks`
-WHERE `missing_required_data` = 1
-   OR `has_valid_gtin` = 0;
+FROM `active_product_data` data
+LEFT JOIN `product_checks` checked
+  ON checked.`product_id` = data.`product_id`
+WHERE data.`missing_required_data` = 1
+   OR COALESCE(checked.`has_invalid_gtin`, 0) = 1;
 
--- Ovaj popis mora biti prazan prije produkcijske objave. Prikazuje prazne,
--- pogrešno oblikovane i kontrolnom znamenkom nevaljane GTIN barkodove. UPC se
--- u ovoj trgovini koristi kao GLS zastavica, a MPN je oznaka proizvođača, pa se
+-- Ovaj popis mora biti prazan prije produkcijske objave. Prikazuje samo upisane
+-- EAN/JAN/ISBN vrijednosti koje su pogrešno oblikovane ili imaju nevaljanu
+-- kontrolnu znamenku. Potpuno prazni EAN/JAN/ISBN podaci su dopušteni. UPC se u
+-- ovoj trgovini koristi kao GLS zastavica, a MPN je oznaka proizvođača, pa se
 -- namjerno ne tretiraju kao barkod.
 WITH
 `active_barcode_data` AS (
@@ -551,13 +560,22 @@ WITH
     AND p.`date_available` <= CURDATE()
 ),
 `barcode_candidates` AS (
-  SELECT `product_id`, `ean` AS `barcode` FROM `active_barcode_data`
-  UNION SELECT `product_id`, `jan` AS `barcode` FROM `active_barcode_data`
-  UNION SELECT `product_id`, `isbn` AS `barcode` FROM `active_barcode_data`
+  SELECT `product_id`, 'EAN' AS `barcode_field`, `ean` AS `barcode`
+  FROM `active_barcode_data`
+  WHERE `ean` IS NOT NULL
+  UNION ALL
+  SELECT `product_id`, 'JAN' AS `barcode_field`, `jan` AS `barcode`
+  FROM `active_barcode_data`
+  WHERE `jan` IS NOT NULL
+  UNION ALL
+  SELECT `product_id`, 'ISBN' AS `barcode_field`, `isbn` AS `barcode`
+  FROM `active_barcode_data`
+  WHERE `isbn` IS NOT NULL
 ),
 `candidate_checks` AS (
   SELECT
     candidate.`product_id`,
+    candidate.`barcode_field`,
     candidate.`barcode`,
     COALESCE(SUM(
       CAST(SUBSTRING(candidate.`barcode`, digit.`position`, 1) AS UNSIGNED)
@@ -572,35 +590,22 @@ WITH
     UNION ALL SELECT 13
   ) digit
     ON digit.`position` < CHAR_LENGTH(candidate.`barcode`)
-  GROUP BY candidate.`product_id`, candidate.`barcode`
-),
-`product_checks` AS (
-  SELECT
-    `product_id`,
-    MAX(
-      CASE
-        WHEN `barcode` REGEXP '^[0-9]{8}$|^[0-9]{12,14}$'
-         AND MOD(10 - MOD(`gtin_weighted_sum`, 10), 10)
-           = CAST(RIGHT(`barcode`, 1) AS UNSIGNED)
-        THEN 1 ELSE 0
-      END
-    ) AS `has_valid_gtin`
-  FROM `candidate_checks`
-  GROUP BY `product_id`
+  GROUP BY candidate.`product_id`, candidate.`barcode_field`, candidate.`barcode`
 )
 SELECT
   data.`product_id`,
   data.`name`,
   data.`model`,
   data.`sku`,
-  data.`ean`,
-  data.`jan`,
-  data.`isbn`
-FROM `active_barcode_data` data
-INNER JOIN `product_checks` checked
-  ON checked.`product_id` = data.`product_id`
-WHERE checked.`has_valid_gtin` = 0
-ORDER BY data.`product_id`;
+  checked.`barcode_field`,
+  checked.`barcode` AS `invalid_gtin`
+FROM `candidate_checks` checked
+INNER JOIN `active_barcode_data` data
+  ON data.`product_id` = checked.`product_id`
+WHERE checked.`barcode` NOT REGEXP '^[0-9]{8}$|^[0-9]{12,14}$'
+   OR MOD(10 - MOD(checked.`gtin_weighted_sum`, 10), 10)
+        <> CAST(RIGHT(checked.`barcode`, 1) AS UNSIGNED)
+ORDER BY data.`product_id`, checked.`barcode_field`;
 
 -- H. Publikacije PJ1/PJ3. Prije prvog crona prvi upit legitimno vraca 0 redaka.
 SELECT

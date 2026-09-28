@@ -21,6 +21,8 @@ Zabilježiti vrijeme kopije i unaprijed potvrditi postupak povrata. Ne nastavlja
 
 Paket ne sadrži SQL migracije. One se izvršavaju zasebno kako bi svaki korak bio kontroliran i provjerljiv.
 
+Paket izravno isporučuje i zajedničke Basel predloške kartica proizvoda, mega-menu, stilove i skriptu žive pretrage. Ti se resursi u temi učitavaju izravno i ne prolaze kroz OCMOD predmemoriju, pa nije dovoljno instalirati samo XML izmjenu. Pri ručnom puštanju treba prenijeti cijeli sadržaj mape `upload/`; verzije CSS-a i JavaScripta u zaglavlju/podnožju služe za trenutno osvježavanje predmemorije preglednika.
+
 ## 3. SQL migracije
 
 Migracije izvršiti na produkcijskoj bazi točno ovim redoslijedom, jednu po jednu:
@@ -107,6 +109,7 @@ Nakon prvog kontroliranog pokretanja, a prije 08:00, provjeriti:
 - nema aktivnog artikla bez potvrđene sidrene cijene ili obveznih podataka, niti artikla s upisanim nevaljanim GTIN-om;
 - ponovno pokretanje istog dana ne stvara nepotrebne duplikate;
 - administracija i javna stranica prikazuju obje publikacije;
+- sidrena cijena prikazuje se na detalju proizvoda, kategoriji, pretrazi, akcijama, proizvođaču, povezanim proizvodima, početnim Basel modulima, standardnim modulima, mega-menu proizvodu i živoj pretrazi;
 - publikacije starije od 30 dana više nisu javno dostupne, dok zadnjih 30 dana ostaje dostupno.
 
 Ako bilo koja od navedenih provjera ne uspije, zaustaviti daljnju objavu, sačuvati log i rezultat četvrte SQL provjere te vratiti sustav prema prethodno pripremljenom postupku oporavka.

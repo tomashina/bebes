@@ -535,6 +535,9 @@ WITH
     NULLIF(TRIM(p.`jan`), '') AS `jan`,
     NULLIF(TRIM(p.`isbn`), '') AS `isbn`
   FROM `oc_product` p
+  INNER JOIN `oc_product_to_store` p2s
+    ON p2s.`product_id` = p.`product_id`
+   AND p2s.`store_id` = 0
   LEFT JOIN `oc_product_description` pd
     ON pd.`product_id` = p.`product_id`
    AND pd.`language_id` = (

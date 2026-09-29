@@ -1014,6 +1014,7 @@ class ModelExtensionModuleAnchorPrice extends Model {
 
 	public function getDailyPublicationState() {
 		$now = new DateTime('now', new DateTimeZone('Europe/Zagreb'));
+		$is_working_day = (int)$now->format('N') <= 5;
 		$start = clone $now;
 		$start->setTime(0, 0, 0);
 		$end = clone $start;
@@ -1024,7 +1025,7 @@ class ModelExtensionModuleAnchorPrice extends Model {
 			$published[] = $row['location_code'];
 		}
 		return array(
-			'due' => (int)$now->format('Hi') >= 800,
+			'due' => $is_working_day && (int)$now->format('Hi') >= 800,
 			'published' => $published,
 			'missing' => array_values(array_diff(array('PJ1', 'PJ3'), $published))
 		);

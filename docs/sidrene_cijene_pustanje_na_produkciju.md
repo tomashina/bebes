@@ -68,7 +68,23 @@ Zapise sa statusom `pending` treba pregledati i potvrditi prije objave. Prije pr
 
 ## 7. Zakazani posao
 
-Zakazani posao postaviti za svaki radni dan, dovoljno prije 08:00, u vremenskoj zoni `Europe/Zagreb` (primjerice u 07:30). Poziv mora koristiti HTTP zaglavlje `X-Anchor-Price-Key`; ključ se ne smije slati u URL-u niti zapisivati u javne upute ili logove.
+Produkcijska objava pokreće se svakim radnim danom u **00:30 po vremenu Europe/Zagreb**. Poslužitelj koristi UTC, pa se zbog automatskog praćenja ljetnog i zimskog vremena zakazuje provjera oba moguća UTC termina:
+
+```cron
+30 22,23 * * * /home/amds/.local/bin/bebes-anchor-cron.sh
+```
+
+Skripta `scripts/bebes_anchor_cron.sh` provjerava lokalni zagrebački sat i dan u tjednu. Nastavlja samo ako je u Zagrebu točno 00:30 od ponedjeljka do petka, pa se poziv izvršava jednom dnevno i nakon promjene sata. Raspored mora imati `*` u polju dana u tjednu jer 00:30 po zagrebačkom vremenu tijekom dijela godine pada na prethodni UTC dan.
+
+Skriptu iz repozitorija postaviti izvan web-korijena s ograničenim ovlastima:
+
+```sh
+install -d -m 700 /home/amds/.local/bin
+install -m 700 /home/amds/bebes-source/scripts/bebes_anchor_cron.sh \
+  /home/amds/.local/bin/bebes-anchor-cron.sh
+```
+
+Poziv mora koristiti HTTP zaglavlje `X-Anchor-Price-Key`; ključ se ne smije slati u URL-u niti zapisivati u javne upute ili logove. Postojeća datoteka `/home/amds/.config/bebes-anchor-curl.conf`, s ovlastima `600`, sadrži URL, opcije Curla i tajno zaglavlje. Skripta samo učitava tu datoteku i nikada ne ispisuje njezin sadržaj.
 
 URL poziva:
 
@@ -76,15 +92,26 @@ URL poziva:
 https://atelierbebes.com/index.php?route=extension/module/anchor_price/cron
 ```
 
-Primjer poziva, s vrijednošću preuzetom iz administracije:
+Primjer sadržaja privatne Curl konfiguracije, s vrijednošću preuzetom iz administracije:
 
-```sh
-curl --fail --silent --show-error \
-  --header 'X-Anchor-Price-Key: <KLJUC_IZ_ADMINISTRACIJE>' \
-  'https://atelierbebes.com/index.php?route=extension/module/anchor_price/cron'
+```text
+fail
+silent
+show-error
+url = "https://atelierbebes.com/index.php?route=extension/module/anchor_price/cron"
+header = "X-Anchor-Price-Key: <KLJUC_IZ_ADMINISTRACIJE>"
 ```
 
-Ključ je prikazan u administraciji modula. Produkcijski scheduler treba zabilježiti samo uspjeh ili pogrešku poziva, bez sadržaja zaglavlja. Na neuspjeh zakazanog posla postaviti upozorenje odgovornoj osobi prije 08:00.
+Ključ je prikazan u administraciji modula. Svaki stvarni pokušaj dodaje u `/home/amds/logs/bebes-anchor-cron.log` samo zagrebačku vremensku oznaku, izlazni status Curla, HTTP status i rezultat provjere JSON odgovora. Log ima ovlasti `600`; ključ i tijelo odgovora ne zapisuju se. Uspješno izvršavanje ne šalje nikakav izlaz, dok neuspjeh vraća jednu opću poruku na standardni izlaz za pogreške kako bi je cPanel mogao poslati e-poštom.
+
+Za idempotentnu ručnu provjeru, neovisno o trenutnom satu, koristiti:
+
+```sh
+/home/amds/.local/bin/bebes-anchor-cron.sh --run-now
+tail -1 /home/amds/logs/bebes-anchor-cron.log
+```
+
+Uspješan redak završava s `curl_exit=0 http_status=200 json_success=1`. Ponovni poziv istog dana koristi već objavljeni valjani PJ1/PJ3 par i ne stvara nepotrebne duplikate. Nakon promjene rasporeda treba provjeriti da je stari izravni Curl cron uklonjen te da postoji samo gornji poziv skripte.
 
 ## 8. Javna objava i arhiva
 

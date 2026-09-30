@@ -1,4 +1,6 @@
 <?php
+require_once(DIR_SYSTEM . 'library/anchor_price_legacy_policy.php');
+
 class ModelExtensionModuleAnchorPrice extends Model {
 	const STORE_ID = 0;
 	const CURRENCY_CODE = 'EUR';
@@ -227,10 +229,59 @@ class ModelExtensionModuleAnchorPrice extends Model {
 		$existing = $this->db->query("SELECT anchor_price_id FROM `" . DB_PREFIX . "anchor_price` WHERE product_id = '" . (int)$product_id . "' AND store_id = '" . self::STORE_ID . "' LIMIT 1");
 
 		if ($existing->num_rows) {
-			return false;
+			return (bool)$this->reconcileUnchangedLegacyBaselines((int)$product_id, (int)$created_by);
 		}
 
 		return $this->insertSnapshot($query->row, $now->format('Y-m-d'), 'first_listing', $source, (int)$created_by);
+	}
+
+	public function reconcileUnchangedLegacyBaselines($product_id = 0, $created_by = 0) {
+		if (!$this->auditTableExists()) {
+			return 0;
+		}
+
+		$now = new DateTime('now', new DateTimeZone('Europe/Zagreb'));
+		$today = $now->format('Y-m-d');
+		$current_currency_code = (string)$this->config->get('config_currency');
+		$sql = "SELECT ap.*, p.price AS product_price, p.tax_class_id AS product_tax_class_id, p.status AS product_status, p.date_added AS product_date_added, p.date_available AS product_date_available FROM `" . DB_PREFIX . "anchor_price` ap INNER JOIN `" . DB_PREFIX . "product` p ON (p.product_id = ap.product_id) INNER JOIN `" . DB_PREFIX . "product_to_store` p2s ON (p2s.product_id = p.product_id AND p2s.store_id = ap.store_id) WHERE ap.store_id = '" . self::STORE_ID . "' AND ap.verification_status = 'pending' AND ap.rule_code = 'baseline_2026_09_10' AND ap.reference_date = '" . self::CUTOVER_DATE . "' AND ap.currency_code = '" . self::CURRENCY_CODE . "' AND ap.source IN ('migration_backfill_2026_09_10', 'install') AND p.status = '1' AND (p.date_available = '0000-00-00' OR p.date_available <= '" . self::CUTOVER_DATE . "')";
+
+		if ((int)$product_id > 0) {
+			$sql .= " AND p.product_id = '" . (int)$product_id . "'";
+		}
+
+		$sql .= ' ORDER BY ap.anchor_price_id ASC FOR UPDATE';
+		$confirmed = 0;
+		$this->db->query('START TRANSACTION');
+
+		try {
+			$query = $this->db->query($sql);
+
+			foreach ($query->rows as $row) {
+				$row['current_currency_code'] = $current_currency_code;
+				$current_gross_price = $this->tax->calculate((float)$row['product_price'], (int)$row['product_tax_class_id'], true);
+
+				if (!AnchorPriceLegacyPolicy::isEligible($row, $current_gross_price, self::STORE_ID, $today)) {
+					continue;
+				}
+
+				$before = $this->snapshotFromRow($row);
+				$after = $before;
+				$after['verification_status'] = 'confirmed';
+				$this->db->query("UPDATE `" . DB_PREFIX . "anchor_price` SET verification_status = 'confirmed', date_modified = NOW() WHERE anchor_price_id = '" . (int)$row['anchor_price_id'] . "' AND verification_status = 'pending'");
+
+				if ($this->db->countAffected() === 1) {
+					$this->addAudit((int)$row['anchor_price_id'], (int)$row['product_id'], (int)$row['store_id'], 'auto_confirm_unchanged_baseline', $before, $after, 'Automatically confirmed unchanged legacy baseline after activation/publication preflight', (int)$created_by);
+					$confirmed++;
+				}
+			}
+
+			$this->db->query('COMMIT');
+		} catch (Exception $exception) {
+			$this->db->query('ROLLBACK');
+			throw $exception;
+		}
+
+		return $confirmed;
 	}
 
 	private function insertSnapshot(array $product, $reference_date, $rule_code, $source, $created_by) {
@@ -470,6 +521,11 @@ class ModelExtensionModuleAnchorPrice extends Model {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "anchor_price_audit` SET anchor_price_id = '" . (int)$anchor_price_id . "', product_id = '" . (int)$product_id . "', store_id = '" . (int)$store_id . "', user_id = '" . (int)$created_by . "', action = '" . $this->db->escape($action) . "', old_data = '" . $this->db->escape($before_json === false ? '{}' : $before_json) . "', new_data = '" . $this->db->escape($after_json === false ? '{}' : $after_json) . "', reason = '" . $this->db->escape($reason) . "', date_added = NOW()");
 	}
 
+	private function auditTableExists() {
+		$query = $this->db->query("SHOW TABLES LIKE '" . $this->db->escape(DB_PREFIX . "anchor_price_audit") . "'");
+		return (bool)$query->num_rows;
+	}
+
 	public function getAuditTrail($anchor_price_id, $limit = 25) {
 		$limit = max(1, min(100, (int)$limit));
 		$query = $this->db->query("SELECT a.*, u.username FROM `" . DB_PREFIX . "anchor_price_audit` a LEFT JOIN `" . DB_PREFIX . "user` u ON (u.user_id = a.user_id) WHERE a.anchor_price_id = '" . (int)$anchor_price_id . "' ORDER BY a.audit_id DESC LIMIT " . $limit);
@@ -488,6 +544,7 @@ class ModelExtensionModuleAnchorPrice extends Model {
 		try {
 			$this->discardUnpublishedPublications($store_id);
 			$this->syncMissingProducts((int)$created_by);
+			$this->reconcileUnchangedLegacyBaselines(0, (int)$created_by);
 			$products = $this->getPublicationProducts($store_id);
 			$this->assertPublicationProducts($products);
 			if (!$products) {

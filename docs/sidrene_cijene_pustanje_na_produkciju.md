@@ -34,7 +34,7 @@ Migracije izvršiti na produkcijskoj bazi točno ovim redoslijedom, jednu po jed
 
 Prve tri skripte stvaraju strukturu, aktiviraju modul i popunjavaju postojeće artikle. Četvrta je samo za čitanje i služi kao kontrola prije prve objave. Ne preskakati rezultate nijednog kontrolnog upita. Popisi nepravilnosti moraju biti prazni, a broj artikala i pokrivenost sidrenim cijenama moraju odgovarati aktivnom katalogu.
 
-Backfill uzima postojeće cijene iz baze. Za artikle objavljene do 10. 9. 2026. koristi se referentni datum 10. 9. 2026. Postojećim aktivnim artiklima dodanima poslije tog prijelaznog datuma `date_added` se postavlja samo kao kandidat za datum prve objave, uz status `pending`. Administrator mora provjeriti stvarni datum prve objave, po potrebi ga ispraviti uz obrazloženje i zatim potvrditi zapis. `date_added` se ne smije smatrati automatskim konačnim dokazom objave. Nacrti dodani poslije prijelaznog datuma ne popunjavaju se unaprijed; modul hvata cijenu i datum kada se artikl prvi put aktivira. Neaktivni povijesni zapisi ostaju `pending` i ne ulaze u cjenik; pri aktivaciji ih treba pregledati i potvrditi, ili to administrator može učiniti ranije ručnom provjerom.
+Backfill uzima postojeće cijene iz baze. Za artikle objavljene do 10. 9. 2026. koristi se referentni datum 10. 9. 2026. Postojećim aktivnim artiklima dodanima poslije tog prijelaznog datuma `date_added` se postavlja samo kao kandidat za datum prve objave, uz status `pending`. Administrator mora provjeriti stvarni datum prve objave, po potrebi ga ispraviti uz obrazloženje i zatim potvrditi zapis. `date_added` se ne smije smatrati automatskim konačnim dokazom objave. Nacrti dodani poslije prijelaznog datuma ne popunjavaju se unaprijed; modul hvata cijenu i datum kada se artikl prvi put aktivira. Neaktivni povijesni zapisi ostaju `pending` dok se ponovno ne aktiviraju. Pri aktivaciji ili neposredno prije objave modul ih automatski potvrđuje samo ako su artikl i njegov datum dostupnosti najkasnije od 10. 9. 2026. te su legacy datum, pravilo, valuta, neto i bruto cijena i porezni razred potpuno nepromijenjeni. Svaka razlika, svaki zapis prve objave i svaki ručno uređeni zapis ostaju `pending` za administratorsku provjeru.
 
 ## 4. Blokada prije prve objave
 
@@ -64,7 +64,7 @@ Trenutna baza također ima samo jednu globalnu količinu artikla. Zbog toga modu
 
 U administracijskom modulu može se pregledati i, uz odgovarajuću ovlast, izmijeniti neto cijena, bruto cijena i referentni datum sidrene cijene. Svaka ručna izmjena zahtijeva obvezan razlog i ostavlja revizijski zapis s prethodnim i novim vrijednostima te korisnikom i vremenom izmjene.
 
-Zapise sa statusom `pending` treba pregledati i potvrditi prije objave. Prije produkcijskog crona provjeriti da nijedan aktivni artikl koji ulazi u cjenik nije ostao nepotvrđen.
+Zapise sa statusom `pending` treba pregledati i potvrditi prije objave. Jedina automatska iznimka su nepromijenjeni legacy baseline zapisi opisani iznad; njihovo automatsko potvrđivanje ostavlja poseban revizijski zapis. Prije produkcijskog crona provjeriti da nijedan aktivni artikl koji ulazi u cjenik nije ostao nepotvrđen.
 
 ## 7. Zakazani posao
 

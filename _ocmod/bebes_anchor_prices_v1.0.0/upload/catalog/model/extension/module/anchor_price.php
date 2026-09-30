@@ -1,5 +1,10 @@
 <?php
+require_once(DIR_SYSTEM . 'library/anchor_price_legacy_policy.php');
+
 class ModelExtensionModuleAnchorPrice extends Model {
+	const STORE_ID = 0;
+	const CURRENCY_CODE = 'EUR';
+	const CUTOVER_DATE = '2026-09-10';
 	const ARCHIVE_DAYS = 30;
 
 	private $table_exists;
@@ -116,6 +121,78 @@ class ModelExtensionModuleAnchorPrice extends Model {
 		return $count;
 	}
 
+	public function reconcileUnchangedLegacyBaselines($store_id = null) {
+		if (!$this->tableExists() || !$this->auditTableExists()) {
+			return 0;
+		}
+
+		if ($store_id === null) {
+			$store_id = (int)$this->config->get('config_store_id');
+		}
+
+		$store_id = (int)$store_id;
+		if ($store_id !== self::STORE_ID) {
+			return 0;
+		}
+
+		$now = new DateTime('now', new DateTimeZone('Europe/Zagreb'));
+		$today = $now->format('Y-m-d');
+		$current_currency_code = (string)$this->config->get('config_currency');
+		$sql = "SELECT ap.*, p.price AS product_price, p.tax_class_id AS product_tax_class_id, p.status AS product_status, p.date_added AS product_date_added, p.date_available AS product_date_available FROM `" . DB_PREFIX . "anchor_price` ap INNER JOIN `" . DB_PREFIX . "product` p ON (p.product_id = ap.product_id) INNER JOIN `" . DB_PREFIX . "product_to_store` p2s ON (p2s.product_id = p.product_id AND p2s.store_id = ap.store_id) WHERE ap.store_id = '" . $store_id . "' AND ap.verification_status = 'pending' AND ap.rule_code = 'baseline_2026_09_10' AND ap.reference_date = '" . self::CUTOVER_DATE . "' AND ap.currency_code = '" . self::CURRENCY_CODE . "' AND ap.source IN ('migration_backfill_2026_09_10', 'install') AND p.status = '1' AND (p.date_available = '0000-00-00' OR p.date_available <= '" . self::CUTOVER_DATE . "') ORDER BY ap.anchor_price_id ASC FOR UPDATE";
+		$confirmed = 0;
+		$this->db->query('START TRANSACTION');
+
+		try {
+			$query = $this->db->query($sql);
+
+			foreach ($query->rows as $row) {
+				$row['current_currency_code'] = $current_currency_code;
+				$current_gross_price = $this->tax->calculate((float)$row['product_price'], (int)$row['product_tax_class_id'], true);
+
+				if (!AnchorPriceLegacyPolicy::isEligible($row, $current_gross_price, $store_id, $today)) {
+					continue;
+				}
+
+				$before = $this->snapshotFromAnchorRow($row);
+				$after = $before;
+				$after['verification_status'] = 'confirmed';
+				$this->db->query("UPDATE `" . DB_PREFIX . "anchor_price` SET verification_status = 'confirmed', date_modified = NOW() WHERE anchor_price_id = '" . (int)$row['anchor_price_id'] . "' AND verification_status = 'pending'");
+
+				if ($this->db->countAffected() === 1) {
+					$this->addReconciliationAudit($row, $before, $after);
+					$confirmed++;
+				}
+			}
+
+			$this->db->query('COMMIT');
+		} catch (Exception $exception) {
+			$this->db->query('ROLLBACK');
+			throw $exception;
+		}
+
+		return $confirmed;
+	}
+
+	private function snapshotFromAnchorRow(array $row) {
+		return array(
+			'price' => $row['price'],
+			'gross_price' => $row['gross_price'],
+			'currency_code' => $row['currency_code'],
+			'tax_class_id' => (int)$row['tax_class_id'],
+			'tax_context' => $row['tax_context'],
+			'reference_date' => $row['reference_date'],
+			'rule_code' => $row['rule_code'],
+			'source' => $row['source'],
+			'verification_status' => $row['verification_status']
+		);
+	}
+
+	private function addReconciliationAudit(array $row, array $before, array $after) {
+		$before_json = json_encode($before);
+		$after_json = json_encode($after);
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "anchor_price_audit` SET anchor_price_id = '" . (int)$row['anchor_price_id'] . "', product_id = '" . (int)$row['product_id'] . "', store_id = '" . (int)$row['store_id'] . "', user_id = '0', action = 'auto_confirm_unchanged_baseline', old_data = '" . $this->db->escape($before_json === false ? '{}' : $before_json) . "', new_data = '" . $this->db->escape($after_json === false ? '{}' : $after_json) . "', reason = 'Automatically confirmed unchanged legacy baseline after activation/publication preflight', date_added = NOW()");
+	}
+
 	private function addSnapshotAudit($anchor_price_id, array $product, $store_id, $currency_code, $gross_price, $tax_context, $reference_date, $rule_code, $source, $verification_status) {
 		if (!$this->auditTableExists()) {
 			return;
@@ -165,6 +242,7 @@ class ModelExtensionModuleAnchorPrice extends Model {
 		try {
 			$this->discardUnpublishedPublications($store_id);
 			$this->syncMissingProducts('price_list_sync');
+			$this->reconcileUnchangedLegacyBaselines($store_id);
 			$products = $this->getPublicationProducts($store_id);
 			$this->assertPublicationProducts($products);
 			if (!$products) {

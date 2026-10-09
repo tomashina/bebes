@@ -21,7 +21,7 @@ $_['text_success_sync'] = 'Success: %s missing anchor price(s) were created.';
 $_['text_success_publish'] = 'Success: Both price lists were published: %s';
 $_['text_success_settings'] = 'Success: The anchor price settings were saved.';
 $_['text_reference_rule'] = 'Products present on or before 10 September 2026 use 2026-09-10. Later products use their first publication date.';
-$_['text_cron_help'] = 'Call this URL every working day before 08:00 Europe/Zagreb and send the key in the X-Anchor-Price-Key HTTP header. It publishes separate PJ1 and PJ3 files from the same product set.';
+$_['text_cron_help'] = 'Call this URL every day before 08:00 Europe/Zagreb and send the key in the X-Anchor-Price-Key HTTP header. It publishes separate PJ1 and PJ3 files from the same product set.';
 $_['text_audit'] = 'Audit trail';
 
 // Columns

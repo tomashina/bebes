@@ -68,13 +68,13 @@ Zapise sa statusom `pending` treba pregledati i potvrditi prije objave. Jedina a
 
 ## 7. Zakazani posao
 
-Produkcijska objava pokreće se svakim radnim danom u **00:30 po vremenu Europe/Zagreb**. Poslužitelj koristi UTC, pa se zbog automatskog praćenja ljetnog i zimskog vremena zakazuje provjera oba moguća UTC termina:
+Produkcijska objava pokreće se svaki dan, uključujući subotu i nedjelju, u **00:30 po vremenu Europe/Zagreb**. Poslužitelj koristi UTC, pa se zbog automatskog praćenja ljetnog i zimskog vremena zakazuje provjera oba moguća UTC termina:
 
 ```cron
 30 22,23 * * * /home/amds/.local/bin/bebes-anchor-cron.sh
 ```
 
-Skripta `scripts/bebes_anchor_cron.sh` provjerava lokalni zagrebački sat i dan u tjednu. Nastavlja samo ako je u Zagrebu točno 00:30 od ponedjeljka do petka, pa se poziv izvršava jednom dnevno i nakon promjene sata. Raspored mora imati `*` u polju dana u tjednu jer 00:30 po zagrebačkom vremenu tijekom dijela godine pada na prethodni UTC dan.
+Skripta `scripts/bebes_anchor_cron.sh` provjerava lokalni zagrebački sat. Nastavlja samo ako je u Zagrebu točno 00:30, pa se poziv izvršava jednom svakoga dana i nakon promjene sata. Raspored mora imati `*` u polju dana u tjednu jer 00:30 po zagrebačkom vremenu tijekom dijela godine pada na prethodni UTC dan.
 
 Skriptu iz repozitorija postaviti izvan web-korijena s ograničenim ovlastima:
 

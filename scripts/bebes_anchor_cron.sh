@@ -33,9 +33,8 @@ esac
 
 if [ "$RUN_NOW" -eq 0 ]; then
 	LOCAL_TIME=$(date '+%H:%M')
-	LOCAL_WEEKDAY=$(date '+%u')
 
-	if [ "$LOCAL_TIME" != '00:30' ] || [ "$LOCAL_WEEKDAY" -gt 5 ]; then
+	if [ "$LOCAL_TIME" != '00:30' ]; then
 		exit 0
 	fi
 fi

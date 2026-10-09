@@ -21,7 +21,7 @@ $_['text_success_sync'] = 'Uspješno: Kreirano je %s nedostajućih sidrenih cije
 $_['text_success_publish'] = 'Uspješno: Objavljena su oba cjenika: %s';
 $_['text_success_settings'] = 'Uspješno: Postavke sidrenih cijena su spremljene.';
 $_['text_reference_rule'] = 'Artikli objavljeni do uključivo 10. rujna 2026. koriste 2026-09-10. Kasniji artikli koriste stvarni datum prve objave.';
-$_['text_cron_help'] = 'Pozovite URL svaki radni dan prije 08:00 po vremenu Europe/Zagreb i pošaljite ključ u HTTP zaglavlju X-Anchor-Price-Key. Objavljuje odvojene PJ1 i PJ3 datoteke iz istog skupa artikala.';
+$_['text_cron_help'] = 'Pozovite URL svaki dan prije 08:00 po vremenu Europe/Zagreb i pošaljite ključ u HTTP zaglavlju X-Anchor-Price-Key. Objavljuje odvojene PJ1 i PJ3 datoteke iz istog skupa artikala.';
 $_['text_audit'] = 'Revizijski trag';
 
 // Stupci

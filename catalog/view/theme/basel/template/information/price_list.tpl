@@ -18,7 +18,9 @@
       <?php echo $content_top; ?>
       <h1 id="page-title"><?php echo $heading_title; ?></h1>
       <p><?php echo $text_intro; ?></p>
-      <?php if ($publications) { ?>
+      <?php if (!$groups['current'] && !$groups['archive']) { ?><p><?php echo $text_empty; ?></p><?php } ?>
+      <?php foreach ($groups as $group => $publications) { if (!$publications) continue; ?>
+      <h2><?php echo $group_titles[$group]; ?></h2>
       <div class="table-responsive">
         <table class="table table-bordered table-hover price-list-archive">
           <thead>
@@ -33,16 +35,14 @@
             <?php foreach ($publications as $publication) { ?>
             <tr>
               <td><strong><?php echo htmlspecialchars($publication['location_code'], ENT_QUOTES, 'UTF-8'); ?></strong> — <?php echo htmlspecialchars($publication['location_name'], ENT_QUOTES, 'UTF-8'); ?></td>
-              <td><?php echo htmlspecialchars($publication['published'], ENT_QUOTES, 'UTF-8'); ?></td>
+              <td><?php echo htmlspecialchars($publication['published'], ENT_QUOTES, 'UTF-8'); ?><?php if ($publication['notice']) { ?><br><small><?php echo htmlspecialchars($publication['notice'], ENT_QUOTES, 'UTF-8'); ?></small><?php } ?></td>
               <td><?php echo (int)$publication['product_count']; ?></td>
-              <td><a class="btn btn-primary btn-sm" href="<?php echo $publication['download']; ?>" rel="nofollow"><i class="fa fa-download"></i> <?php echo $button_download; ?></a><br><small><?php echo htmlspecialchars($publication['filename'], ENT_QUOTES, 'UTF-8'); ?></small></td>
+              <td><a class="btn btn-primary btn-sm" href="<?php echo $publication['download']; ?>"><i class="fa fa-download"></i> <?php echo $button_download; ?></a><br><small><?php echo htmlspecialchars($publication['filename'], ENT_QUOTES, 'UTF-8'); ?></small></td>
             </tr>
             <?php } ?>
           </tbody>
         </table>
       </div>
-      <?php } else { ?>
-      <p><?php echo $text_empty; ?></p>
       <?php } ?>
       <?php echo $content_bottom; ?>
     </div>

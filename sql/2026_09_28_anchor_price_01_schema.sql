@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `oc_anchor_price` (
   `reference_date` DATE NOT NULL,
   `rule_code` VARCHAR(32) NOT NULL,
   `source` VARCHAR(32) NOT NULL,
-  `verification_status` VARCHAR(20) NOT NULL DEFAULT 'confirmed',
+  `verification_status` VARCHAR(20) NOT NULL DEFAULT 'pending',
   `created_by` INT(11) UNSIGNED NOT NULL DEFAULT '0',
   `date_added` DATETIME NOT NULL,
   `date_modified` DATETIME NOT NULL,

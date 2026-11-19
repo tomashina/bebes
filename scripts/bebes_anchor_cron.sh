@@ -22,6 +22,9 @@ RUN_NOW=0
 case "${1:-}" in
 	'')
 		;;
+	--check-changes)
+		case "$(date '+%H:%M')" in 00:45|10:45) RUN_NOW=1 ;; *) exit 0 ;; esac
+		;;
 	--run-now)
 		RUN_NOW=1
 		;;
@@ -73,6 +76,7 @@ trap cleanup EXIT HUP INT TERM
 
 HTTP_STATUS=$(/bin/curl \
 	--config "$CONFIG_FILE" \
+	--connect-timeout 15 --max-time 120 --retry 2 --retry-delay 30 --retry-max-time 240 \
 	--output "$RESPONSE_FILE" \
 	--write-out '%{http_code}' \
 	2>/dev/null)
@@ -104,8 +108,15 @@ if [ "$CURL_STATUS" -eq 0 ] && [ "$HTTP_STATUS" = '200' ] && [ -n "$PHP_BIN" ]; 
 				exit(1);
 			}
 		}
+		$warnings = $payload["warnings"] ?? array();
+		$report = json_encode(array("published_at" => date(DATE_ATOM), "warnings" => $warnings), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+		$temp = tempnam(dirname($argv[1]), ".bbm-report-");
+		if (!$temp || $report === false || file_put_contents($temp, $report) !== strlen($report) || !rename($temp, $argv[1])) {
+			if ($temp) { @unlink($temp); }
+			exit(1);
+		}
 		exit(0);
-	' < "$RESPONSE_FILE" >/dev/null 2>&1; then
+	' "$LOG_DIRECTORY/bebes-anchor-provjera.json" < "$RESPONSE_FILE" >/dev/null 2>&1; then
 		JSON_SUCCESS=1
 	fi
 fi

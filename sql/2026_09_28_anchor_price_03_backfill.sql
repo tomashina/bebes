@@ -15,9 +15,7 @@
 -- i buduci artikli namjerno se ne seedaju: njihov se stvarni datum prve objave
 -- hvata tek pri aktivaciji kroz admin event.
 --
--- PJ1 (fizicka trgovina) i PJ3 (web) koriste isti skup artikala i cijena.
--- Ne stvaraju se dvije sidrene stavke: obje dnevne publikacije citaju ovu istu
--- product/store evidenciju, a razlikuju se samo po location_code u publikaciji.
+-- Ovo su kandidati za provjeru web trgovine PJ3. PJ1 ima zaseban BBM izvor.
 
 START TRANSACTION;
 
@@ -72,11 +70,7 @@ SELECT
     ELSE 'baseline_2026_09_10'
   END AS `rule_code`,
   'migration_backfill_2026_09_10' AS `source`,
-  CASE
-	WHEN p.`status` <> 1 OR p.`date_available` > CURDATE() THEN 'pending'
-    WHEN DATE(p.`date_added`) > '2026-09-10' THEN 'pending'
-    ELSE 'confirmed'
-  END AS `verification_status`,
+  'pending' AS `verification_status`,
   0 AS `created_by`,
   NOW() AS `date_added`,
   NOW() AS `date_modified`

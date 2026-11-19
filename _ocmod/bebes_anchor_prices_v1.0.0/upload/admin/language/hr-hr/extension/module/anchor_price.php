@@ -21,7 +21,7 @@ $_['text_success_sync'] = 'Uspješno: Kreirano je %s nedostajućih sidrenih cije
 $_['text_success_publish'] = 'Uspješno: Objavljena su oba cjenika: %s';
 $_['text_success_settings'] = 'Uspješno: Postavke sidrenih cijena su spremljene.';
 $_['text_reference_rule'] = 'Artikli objavljeni do uključivo 10. rujna 2026. koriste 2026-09-10. Kasniji artikli koriste stvarni datum prve objave.';
-$_['text_cron_help'] = 'Pozovite URL svaki dan prije 08:00 po vremenu Europe/Zagreb i pošaljite ključ u HTTP zaglavlju X-Anchor-Price-Key. Objavljuje odvojene PJ1 i PJ3 datoteke iz istog skupa artikala.';
+$_['text_cron_help'] = 'BBM priprema PJ1 u 00:20. Objava za PJ1 i PJ3 pokreće se svaki dan u 00:30 (Europe/Zagreb). Ponovite objavu na dan promjene cijena do 11:00.';
 $_['text_audit'] = 'Revizijski trag';
 
 // Stupci
@@ -69,10 +69,20 @@ $_['button_download'] = 'Preuzmi';
 // Pomoć
 $_['help_reason'] = 'Obvezno. Razlog se trajno čuva u revizijskom tragu.';
 $_['help_gross_price'] = 'Bruto snapshot s porezom. Mijenjajte samo kada je potrebno ispraviti sam spremljeni snapshot.';
-$_['help_default_unit'] = 'Koristi se za sve artikle jer trgovina nema strukturirano polje prodajne jedinice. Zadano: kom.';
+$_['help_default_unit'] = 'Prodajna jedinica za komadnu robu. Za mjerenu robu ispunite atribute Neto količina i Jedinica mjere.';
 
 // Upozorenja i greške
-$_['warning_publication_due'] = 'Dnevni cjenici nisu oba objavljena do 08:00. Nedostaje: %s.';
+$_['warning_publication_due'] = 'Dnevni cjenici nisu oba objavljena do 11:00. Nedostaje: %s.';
+$_['warning_product_data'] = '%s artikala web trgovine zahtijeva provjeru. Bazna cijena se objavljuje nakon potvrde.';
+$_['text_product_warnings'] = 'Prikaži artikle i razloge upozorenja';
+$_['warning_anchor_missing'] = 'Nedostaje sidrena cijena';
+$_['warning_anchor_unconfirmed'] = 'Sidrena cijena nije potvrđena';
+$_['warning_name_missing'] = 'Nedostaje naziv';
+$_['warning_model_missing'] = 'Nedostaje model / šifra';
+$_['warning_manufacturer_missing'] = 'Nedostaje proizvođač / marka';
+$_['warning_ean_invalid'] = 'EAN nije valjani GTIN';
+$_['warning_jan_invalid'] = 'JAN nije valjani GTIN';
+$_['warning_isbn_invalid'] = 'ISBN nije valjani GTIN';
 $_['error_permission'] = 'Upozorenje: Nemate ovlasti za izmjenu modula Sidrene cijene.';
 $_['error_not_installed'] = 'Tablice modula ne postoje. Najprije instalirajte modul kroz Proširenja.';
 $_['error_not_found'] = 'Tražena sidrena cijena nije pronađena.';
@@ -83,3 +93,16 @@ $_['error_status'] = 'Odaberite ispravan status provjere.';
 $_['error_reason'] = 'Razlog mora sadržavati između 3 i 255 znakova.';
 $_['error_default_unit'] = 'Zadana jedinica mora sadržavati između 1 i 16 znakova.';
 $_['error_file_missing'] = 'Datoteka objave nije dostupna ili joj je istekao rok čuvanja od 30 dana.';
+$_['entry_history_group'] = 'Skupina robe';
+$_['text_history_may'] = 'Hrana, piće, kozmetika, sredstva za čišćenje, toaletne potrepštine i proizvodi za kućanstvo';
+$_['text_history_other'] = 'Ostala roba';
+$_['entry_first_offer'] = 'Datum prve ponude';
+$_['entry_reference_sale'] = 'Akcija ili popust na referentni dan';
+$_['help_history_amount'] = 'Uz akciju za prvu skupinu upišite najnižu cijenu u 30 dana prije početka akcije. Za ostalu robu upišite prethodno primijenjenu cijenu. U razlogu navedite izvor provjere.';
+$_['warning_net_quantity'] = 'Provjerite neto količinu i jedinicu za usporedbu cijena.';
+$_['entry_bbm_password'] = 'BBM lozinka za PJ1';
+$_['help_bbm_password'] = 'Upišite lozinku samo pri postavljanju ili promjeni. Račun: iis_altitudo.';
+
+$_['warning_legacy_history_review'] = 'Provjerite povijesnu podlogu prethodno potvrđene cijene.';
+$_['warning_unit_missing'] = 'Potvrdite jedinicu mjere.';
+$_['warning_zero_retail'] = 'Potvrdite maloprodajnu cijenu od 0,00 EUR.';

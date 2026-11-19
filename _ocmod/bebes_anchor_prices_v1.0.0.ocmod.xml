@@ -2,7 +2,7 @@
 <modification>
 	<name>Bebes sidrene cijene i dnevni cjenici PJ1/PJ3</name>
 	<code>bebes_anchor_prices</code>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<author>Codex</author>
 
 	<file path="admin/controller/common/column_left.php">

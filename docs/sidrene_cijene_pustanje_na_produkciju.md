@@ -1,4 +1,4 @@
-# Sidrene cijene i dnevni cjenici — puštanje na produkciju
+# Bazne cijene i dnevni cjenici PJ1 i PJ3
 
 Ove upute odnose se na modul `Bebes sidrene cijene i dnevni cjenici PJ1/PJ3` za OpenCart. Produkcijsko puštanje prvo treba uvježbati na kopiji produkcijske baze i datoteka. SQL skripte koriste prefiks tablica `oc_` i očekuju MySQL 8 funkcije korištene u migracijama.
 
@@ -12,67 +12,38 @@ Prije bilo kakve izmjene napraviti i provjeriti potpunu sigurnosnu kopiju:
 
 Zabilježiti vrijeme kopije i unaprijed potvrditi postupak povrata. Ne nastavljati ako se sigurnosna kopija ne može probno otvoriti ili vratiti.
 
-## 2. Učitavanje OCMOD paketa
+## 2. Nadogradnja postojeće instalacije
 
-1. U administraciji otvoriti **Extensions > Extension Installer** i učitati paket `_ocmod/bebes_anchor_prices_v1.0.0.ocmod.zip`.
-2. Otvoriti **Extensions > Modifications** i pritisnuti **Refresh**.
-3. Očistiti OpenCart/theme predmemoriju ako je uključena.
-4. Provjeriti da instalacija nije prijavila pogrešku i da su nove datoteke na poslužitelju.
+U novu verziju prenesite sadržaj mape `_ocmod/bebes_anchor_prices_v1.0.0/upload/` ili iste datoteke iz paketa `_ocmod/bebes_anchor_prices_v1.1.0.ocmod.zip`. Postojeća OCMOD izmjena `bebes_anchor_prices` već ima kôd za prikaz cijena. Osvježite **Extensions → Modifications** i predmemoriju teme. Prenesite i ažuriranu skriptu crona prema odjeljku 4. Skripta za provjeru izvora nalazi se u `scripts/bebes_bbm_provjera.php`.
 
-Paket ne sadrži SQL migracije. One se izvršavaju zasebno kako bi svaki korak bio kontroliran i provjerljiv.
+Ova nadogradnja koristi postojeće tablice i datoteke arhive. Kod prve instalacije učitajte OCMOD paket i instalirajte modul. Povijesne SQL skripte iz rujna namijenjene su inicijalnoj instalaciji. Vrijednosti iz tog početnog punjenja su kandidati za provjeru.
 
-Paket izravno isporučuje i zajedničke Basel predloške kartica proizvoda, mega-menu, stilove i skriptu žive pretrage. Ti se resursi u temi učitavaju izravno i ne prolaze kroz OCMOD predmemoriju, pa nije dovoljno instalirati samo XML izmjenu. Pri ručnom puštanju treba prenijeti cijeli sadržaj mape `upload/`; verzije CSS-a i JavaScripta u zaglavlju/podnožju služe za trenutno osvježavanje predmemorije preglednika.
+## 3. BBM izvor za fizičku trgovinu
 
-## 3. SQL migracije
+BBM generira datoteku za PJ1, skladište 00001, u 00:20 po zagrebačkom vremenu. Modul u 00:30 preuzima ZIP s adrese `https://t02.bbm.hr/altitudo/sidrene_cijene.zip` preko HTTPS-a, s korisničkim imenom `iis_altitudo`. U administraciji otvorite **Sidrene cijene → Postavke → BBM lozinka za PJ1**. Upišite lozinku i spremite postavke. Prazno polje zadržava već spremljenu lozinku.
 
-Migracije izvršiti na produkcijskoj bazi točno ovim redoslijedom, jednu po jednu:
+PHP proces sprema lozinku u `/home/amds/.config/bebes-bbm-password` s ovlastima 0600. Za drugačiju instalaciju postavite konstantu `BEBES_BBM_PASSWORD_FILE` na istu apsolutnu privatnu putanju u kataloškom i administratorskom configu. Lozinka se koristi isključivo za preuzimanje s navedene BBM adrese.
 
-1. `sql/2026_09_28_anchor_price_01_schema.sql`
-2. `sql/2026_09_28_anchor_price_02_activation.sql`
-3. `sql/2026_09_28_anchor_price_03_backfill.sql`
-4. `sql/2026_09_28_anchor_price_04_verify_read_only.sql`
+Prije prijelaza provjerite prvi autentični ZIP na poslužitelju iz mape projekta. Provjera čita datoteku, izrađuje probni CSV te ispisuje broj artikala, kontrolni zbroj i artikle s praznom baznom cijenom.
 
-Prve tri skripte stvaraju strukturu, aktiviraju modul i popunjavaju postojeće artikle. Četvrta je samo za čitanje i služi kao kontrola prije prve objave. Ne preskakati rezultate nijednog kontrolnog upita. Popisi nepravilnosti moraju biti prazni, a broj artikala i pokrivenost sidrenim cijenama moraju odgovarati aktivnom katalogu.
+```sh
+php scripts/bebes_bbm_provjera.php
+```
 
-Backfill uzima postojeće cijene iz baze. Za artikle objavljene do 10. 9. 2026. koristi se referentni datum 10. 9. 2026. Postojećim aktivnim artiklima dodanima poslije tog prijelaznog datuma `date_added` se postavlja samo kao kandidat za datum prve objave, uz status `pending`. Administrator mora provjeriti stvarni datum prve objave, po potrebi ga ispraviti uz obrazloženje i zatim potvrditi zapis. `date_added` se ne smije smatrati automatskim konačnim dokazom objave. Nacrti dodani poslije prijelaznog datuma ne popunjavaju se unaprijed; modul hvata cijenu i datum kada se artikl prvi put aktivira. Neaktivni povijesni zapisi ostaju `pending` dok se ponovno ne aktiviraju. Pri aktivaciji ili neposredno prije objave modul ih automatski potvrđuje samo ako su artikl i njegov datum dostupnosti najkasnije od 10. 9. 2026. te su legacy datum, pravilo, valuta, neto i bruto cijena i porezni razred potpuno nepromijenjeni. Svaka razlika, svaki zapis prve objave i svaki ručno uređeni zapis ostaju `pending` za administratorsku provjeru.
+BBM-ov izvoz sadrži jedan UTF-8 CSV s osam stupaca: naziv, sifra, mjera, mpcijena, mpcijena akcija, barkod, mpcijena bazna i mpcijena bazna datum. Modul provjerava OIB, adresu, PJ1 i datum u imenu datoteke. Neprazna akcijska cijena postaje važeći MPC. Izvorne šifre i barkodovi zadržavaju početne nule. Marka i eksplicitni atributi neto količine mogu se dopuniti iz kataloga trgovca kod jednoznačnog podudaranja. Iznosi za PJ1 dolaze iz BBM-a. Za provjeru spremljenog ZIP-a dodajte njegovu putanju naredbi iznad.
 
-## 4. Blokada prije prve objave
+Stvarni raspored i sadržaj zaštićenog BBM izvoza treba potvrditi prvim preuzimanjem. Kod drukčije sheme usporedite zaglavlja i značenje polja s dobavljačem. Ako izvoz sadrži samo šifru i baznu cijenu, za ostale stupce potreban je vjerodostojan izvor PJ1 s odgovarajućim artiklima. Neuspjela prijava, stara datoteka, prazna datoteka ili nepoznata shema vraća pogrešku. Zadnji objavljeni par ostaje dostupan.
 
-Ne pokretati ručnu objavu i ne uključivati zakazani posao dok sve provjere nisu završene.
-
-Barkod nije obvezan: artikl kod kojeg su `EAN`, `JAN` i `ISBN` svi prazni smije ući u objavu. Ako je bilo koje od tih polja popunjeno, svaka upisana vrijednost mora biti valjani GTIN-8, GTIN-12, GTIN-13 ili GTIN-14: isključivo numerička, dopuštene duljine i s ispravnom kontrolnom znamenkom. Polje `UPC` se u ovoj trgovini koristi za GLS i ne smije se preuzimati kao barkod proizvoda. Kontrolni popis prikazuje samo upisane nevaljane vrijednosti i mora biti prazan prije produkcijske objave. Ako artikl nema stvarni barkod, pogrešno unesenu vrijednost treba ukloniti umjesto izmišljati GTIN.
-
-Prije prve objave također potvrditi sljedeće:
-
-- svaki aktivni artikl ima potvrđenu sidrenu cijenu, naziv, model i proizvođača;
-- porezni razredi i izračun bruto cijene odgovaraju produkcijskim podacima;
-- datum sidrene cijene za artikle dodane nakon 10. 9. 2026. odgovara stvarnom datumu prve objave;
-- izlazna mapa `system/storage/download/anchor_price/` postoji ili je aplikacija može stvoriti i u nju pisati.
-
-## 5. PJ1, PJ3 i dostupnost
-
-Svaki dan nastaju dvije odvojene CSV datoteke:
-
-- `PJ1` — fizička trgovina; naziv datoteke sadrži prodajno mjesto/adresu i oznaku `PJ1`;
-- `PJ3` — web trgovina; naziv datoteke sadrži web prodajno mjesto/domenu i oznaku `PJ3`.
-
-Cijene su iste za oba prodajna mjesta, prema potvrdi korisnika. Nije potvrđeno da je jednak i asortiman. Zbog jednog globalnog OpenCart store/mapiranja trenutna implementacija u `PJ1` i `PJ3` uključuje isti aktivni skup artikala. Ako se stvarni asortiman razlikuje, prije produkcijske objave mora se dodati vjerodostojan izvor ili mapa artikala po lokaciji.
-
-Trenutna baza također ima samo jednu globalnu količinu artikla. Zbog toga modul sada objavljuje jednaku dostupnost za `PJ1` i `PJ3`. Ako stvarna zaliha fizičke i web trgovine nije jednaka, modul se ne smije pustiti u produkcijsku objavu dok se ne osigura vjerodostojan izvor količine po lokaciji i mapiranje tog izvora na `PJ1` i `PJ3`.
-
-## 6. Administracija sidrenih cijena
-
-U administracijskom modulu može se pregledati i, uz odgovarajuću ovlast, izmijeniti neto cijena, bruto cijena i referentni datum sidrene cijene. Svaka ručna izmjena zahtijeva obvezan razlog i ostavlja revizijski zapis s prethodnim i novim vrijednostima te korisnikom i vremenom izmjene.
-
-Zapise sa statusom `pending` treba pregledati i potvrditi prije objave. Jedina automatska iznimka su nepromijenjeni legacy baseline zapisi opisani iznad; njihovo automatsko potvrđivanje ostavlja poseban revizijski zapis. Prije produkcijskog crona provjeriti da nijedan aktivni artikl koji ulazi u cjenik nije ostao nepotvrđen.
-
-## 7. Zakazani posao
+## 4. Zakazani posao
 
 Produkcijska objava pokreće se svaki dan, uključujući subotu i nedjelju, u **00:30 po vremenu Europe/Zagreb**. Poslužitelj koristi UTC, pa se zbog automatskog praćenja ljetnog i zimskog vremena zakazuje provjera oba moguća UTC termina:
 
 ```cron
 30 22,23 * * * /home/amds/.local/bin/bebes-anchor-cron.sh
+45 8,9,22,23 * * * /home/amds/.local/bin/bebes-anchor-cron.sh --check-changes
 ```
+
+Dodatne lokalne provjere u 00:45 i 10:45 preuzimaju najnoviji izvoz. Ako su oba sadržaja ista, zadržavaju postojeću objavu.
 
 Skripta `scripts/bebes_anchor_cron.sh` provjerava lokalni zagrebački sat. Nastavlja samo ako je u Zagrebu točno 00:30, pa se poziv izvršava jednom svakoga dana i nakon promjene sata. Raspored mora imati `*` u polju dana u tjednu jer 00:30 po zagrebačkom vremenu tijekom dijela godine pada na prethodni UTC dan.
 
@@ -111,32 +82,25 @@ Za idempotentnu ručnu provjeru, neovisno o trenutnom satu, koristiti:
 tail -1 /home/amds/logs/bebes-anchor-cron.log
 ```
 
-Uspješan redak završava s `curl_exit=0 http_status=200 json_success=1`. Ponovni poziv istog dana koristi već objavljeni valjani PJ1/PJ3 par i ne stvara nepotrebne duplikate. Nakon promjene rasporeda treba provjeriti da je stari izravni Curl cron uklonjen te da postoji samo gornji poziv skripte.
+Uspješan redak završava s `curl_exit=0 http_status=200 json_success=1`. Pri svakom pozivu modul ponovno dohvaća BBM izvoz i čita web katalog. Dva jednaka kontrolna zbroja zadržavaju postojeću dnevnu objavu. Promjena u bilo kojem cjeniku stvara novi par. Izvještaj posljednjeg uspješnog poziva sa šiframa za provjeru nalazi se u privatnoj datoteci `/home/amds/logs/bebes-anchor-provjera.json` nakon nadogradnje omotača. Nakon promjene rasporeda treba provjeriti da je stari izravni Curl cron uklonjen te da oba gornja retka postoje po jednom.
 
-## 8. Javna objava i arhiva
+## 5. Stranica i arhiva
 
-Javna stranica cjenika nalazi se na:
+Na stranici `https://atelierbebes.com/index.php?route=information/price_list` važeće datoteke imaju stalne adrese:
 
-```text
-https://atelierbebes.com/index.php?route=information/price_list
-```
+- `https://atelierbebes.com/index.php?route=information/price_list/download&location=PJ1`
+- `https://atelierbebes.com/index.php?route=information/price_list/download&location=PJ3`
 
-Objavljene CSV datoteke čuvaju se 30 dana. Starije datoteke modul označava isteklima i uklanja iz javno dostupne arhive. Ne postavljati dodatni vanjski posao koji bi brisao datoteke mlađe od 30 dana.
+Arhivske poveznice koriste `publication_id`. Zadnji valjani redovni cjenik ostaje dostupan dok ga trgovac ne zamijeni. Trgovina čuva prethodne verzije 30 dana od zamjene, čime pokriva propisanih 15 dana. Naknadni povijesni primjerak ostaje označen i ne postaje važeći cjenik. Postojeće preuzete datoteke ostaju u izvornom formatu.
 
-## 9. Završna provjera
+Datoteke nose OIB 59774997564 društva ALTITUDO CENTAR d.o.o., vrstu i adresu prodajnog mjesta, oznaku PJ1 ili PJ3, oznaku ROBA, redni broj pohrane i zagrebačku vremensku oznaku GGGGMMDD_SSMM. CSV koristi UTF-8 i točku sa zarezom. Nakon promjene ponovno pokrenite objavu do 11:00 na dan izmjene. Ako se promjena odnosi na PJ1, najprije zatražite da BBM osvježi izvoz.
 
-Nakon prvog kontroliranog pokretanja, a prije 08:00, provjeriti:
+## 6. Web trgovina i provjera povijesti
 
-- odgovor zakazanog poziva označava uspjeh;
-- za isti datum postoje točno dvije objavljene datoteke, jedna za `PJ1` i jedna za `PJ3`;
-- obje datoteke imaju jednak broj artikala i, osim polja prodajnog mjesta/dostupnosti po lokaciji, iste dogovorene podatke i cijene;
-- naziv svake datoteke sadrži vrstu prodajnog mjesta, adresu/domenu, `PJ1` odnosno `PJ3`, redni broj i vremensku oznaku;
-- datoteke se mogu preuzeti s javne stranice i otvoriti kao CSV;
-- kontrolni zbroj SHA-256 spremljene datoteke odgovara zapisu publikacije;
-- nema aktivnog artikla bez potvrđene sidrene cijene ili obveznih podataka, niti artikla s upisanim nevaljanim GTIN-om;
-- ponovno pokretanje istog dana ne stvara nepotrebne duplikate;
-- administracija i javna stranica prikazuju obje publikacije;
-- sidrena cijena prikazuje se na detalju proizvoda, kategoriji, pretrazi, akcijama, proizvođaču, povezanim proizvodima, početnim Basel modulima, standardnim modulima, mega-menu proizvodu i živoj pretrazi;
-- publikacije starije od 30 dana više nisu javno dostupne, dok zadnjih 30 dana ostaje dostupno.
+Za PJ3 modul čita web asortiman i aktualne maloprodajne cijene s PDV-om. Model artikla je šifra u cjeniku. Neto količina i jedinica za robu za koju je obvezna jedinična cijena unose se u hrvatske atribute proizvoda **Neto količina** i **Jedinica mjere**. Unesite količinu pakiranja, npr. 250 i ml. Web izvoz iskazuje 0,25 l i cijenu po litri. Provjerite primjenjivost za svaki artikl kojemu ti atributi nedostaju. Zaliha i transportna masa služe drugim namjenama. UPC u ovoj trgovini označava GLS. Provjereni EAN ima zaseban stupac.
 
-Ako bilo koja od navedenih provjera ne uspije, zaustaviti daljnju objavu, sačuvati log i rezultat četvrte SQL provjere te vratiti sustav prema prethodno pripremljenom postupku oporavka.
+U registru baznih cijena za svaku potvrdu unesite skupinu, stvarni datum prve ponude, referentni datum, podatak o akciji te izvor dokaza u razlogu izmjene. Prva skupina obuhvaća hranu, piće, kozmetiku, sredstva za čišćenje, toaletne potrepštine i proizvode za kućanstvo. Njezin je referentni datum 2. svibnja 2025. Za ostalu robu vrijedi 10. rujna 2026. Kod kasnije prve ponude vrijedi datum prve ponude. Za akciju na relevantni dan prve skupine provjerava se najniža cijena kroz 30 dana prije početka akcije. Za ostalu robu na akciji provjerava se prethodno primijenjena maloprodajna cijena.
+
+Potvrde iz prethodne verzije prikazuju se za ponovnu provjeru. Neto i bruto iznosi, datumi i trag izmjena ostaju u registru. Na webu i u PJ3 CSV-u ostaju prethodno objavljene cijene koje je trgovac evidentirao kao potvrđene. Izvještaj ih označava za provjeru povijesne podloge dok se novi pregled ne dovrši. Zapisi bez potvrde ostaju prazni. U PJ1 se koristi dobavljačeva bazna cijena za to prodajno mjesto. Potvrdite s BBM-om koja je povijesna evidencija korištena za izvoz. Prazna bazna cijena ostaje u izvještaju za ispravak.
+
+[Pravilnik o isticanju bazne cijene proizvoda (NN 132/2026, 1583)](https://narodne-novine.nn.hr/clanci/sluzbeni/2026_11_132_1583.html) · [Pravilnik o načinu objave cjenika proizvoda (NN 132/2026, 1584)](https://narodne-novine.nn.hr/clanci/sluzbeni/2026_11_132_1584.html)

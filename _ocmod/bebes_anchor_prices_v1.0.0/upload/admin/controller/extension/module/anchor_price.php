@@ -35,6 +35,7 @@ class ControllerExtensionModuleAnchorPrice extends Controller {
 		$data['anchors'] = array();
 		$data['publications'] = array();
 		$data['missing_count'] = 0;
+		$data['product_warnings'] = array();
 		$total = 0;
 
 		if ($this->model_extension_module_anchor_price->tablesExist()) {
@@ -60,6 +61,20 @@ class ControllerExtensionModuleAnchorPrice extends Controller {
 			}
 
 			$data['missing_count'] = $this->model_extension_module_anchor_price->getMissingProductCount(true);
+			foreach ($this->model_extension_module_anchor_price->getPublicationWarnings() as $warning) {
+				$reasons = array();
+				foreach ($warning['reasons'] as $reason) {
+					$reasons[] = $this->language->get('warning_' . $reason);
+				}
+				$data['product_warnings'][] = array(
+					'product_id' => $warning['product_id'],
+					'code' => $warning['code'],
+					'product_name' => $warning['product_name'] !== '' ? $warning['product_name'] : '#' . $warning['product_id'],
+					'reasons' => implode('; ', $reasons),
+					'product_edit' => $this->url->link('catalog/product/edit', 'token=' . $this->session->data['token'] . '&product_id=' . $warning['product_id'], true),
+					'anchor_edit' => $warning['anchor_price_id'] ? $this->url->link('extension/module/anchor_price/edit', 'token=' . $this->session->data['token'] . '&anchor_price_id=' . $warning['anchor_price_id'], true) : ''
+				);
+			}
 			foreach ($this->model_extension_module_anchor_price->getPublications(20) as $publication) {
 				$data['publications'][] = array(
 					'publication_id' => (int)$publication['publication_id'],
@@ -157,6 +172,9 @@ class ControllerExtensionModuleAnchorPrice extends Controller {
 				'price' => $this->normaliseNumber($this->request->post['price']),
 				'gross_price' => $this->normaliseNumber($this->request->post['gross_price']),
 				'reference_date' => trim($this->request->post['reference_date']),
+				'history_group' => $this->request->post['history_group'] ?? '',
+				'first_offer' => $this->request->post['first_offer'] ?? '',
+				'reference_sale' => $this->request->post['reference_sale'] ?? '',
 				'verification_status' => trim($this->request->post['verification_status'])
 			);
 
@@ -179,14 +197,18 @@ class ControllerExtensionModuleAnchorPrice extends Controller {
 		$data['action'] = $this->url->link('extension/module/anchor_price/edit', 'token=' . $this->session->data['token'] . '&anchor_price_id=' . $anchor_price_id, true);
 		$data['cancel'] = $this->url->link('extension/module/anchor_price', 'token=' . $this->session->data['token'], true);
 		$data['anchor'] = $anchor;
+		$context = json_decode($anchor['tax_context'], true);
+		foreach (array('history_group', 'first_offer', 'reference_sale') as $key) {
+			$data[$key] = $this->request->post[$key] ?? ($context['history_review'][$key] ?? '');
+		}
 		$data['price'] = isset($this->request->post['price']) ? $this->request->post['price'] : $anchor['price'];
 		$data['gross_price'] = isset($this->request->post['gross_price']) ? $this->request->post['gross_price'] : $anchor['gross_price'];
 		$data['reference_date'] = isset($this->request->post['reference_date']) ? $this->request->post['reference_date'] : $anchor['reference_date'];
 		$data['verification_status'] = isset($this->request->post['verification_status']) ? $this->request->post['verification_status'] : $anchor['verification_status'];
 		$data['reason'] = isset($this->request->post['reason']) ? $this->request->post['reason'] : '';
 		$data['statuses'] = array('confirmed' => $this->language->get('text_status_confirmed'));
+		$data['statuses']['pending'] = $this->language->get('text_status_pending');
 		if (!(int)$anchor['product_status']) {
-			$data['statuses']['pending'] = $this->language->get('text_status_pending');
 			$data['statuses']['disabled'] = $this->language->get('text_status_disabled');
 		}
 		$data['audits'] = array();
@@ -261,6 +283,17 @@ class ControllerExtensionModuleAnchorPrice extends Controller {
 		} elseif (utf8_strlen($unit) < 1 || utf8_strlen($unit) > 16) {
 			$this->session->data['error'] = $this->language->get('error_default_unit');
 		} else {
+			if (isset($this->request->post['bbm_password']) && $this->request->post['bbm_password'] !== '') {
+				require_once DIR_SYSTEM . 'library/bebes_bbm_price_list.php';
+				try {
+					$password = htmlspecialchars_decode($this->request->post['bbm_password'], ENT_COMPAT);
+					BebesBbmPriceList::savePassword($password);
+				} catch (Exception $e) {
+					$this->session->data['error'] = $e->getMessage();
+					$this->response->redirect($this->url->link('extension/module/anchor_price', 'token=' . $this->session->data['token'], true));
+					return;
+				}
+			}
 			$this->load->model('setting/setting');
 			$settings = $this->model_setting_setting->getSetting('module_anchor_price', 0);
 			$settings['module_anchor_price_default_unit'] = $unit;

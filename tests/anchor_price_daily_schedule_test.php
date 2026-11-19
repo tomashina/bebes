@@ -45,13 +45,13 @@ foreach ($mirror_pairs as $name => $paths) {
 }
 
 $admin_model = readScheduleFile($mirror_pairs['admin model'][0]);
-assertScheduleCondition(strpos($admin_model, "'due' => (int)\$now->format('Hi') >= 800") !== false, 'Admin overdue warning must apply every day after 08:00.');
+assertScheduleCondition(strpos($admin_model, "'due' => (int)\$now->format('Hi') >= 1100") !== false, 'Admin overdue warning must apply every day after 11:00.');
 assertScheduleCondition(strpos($admin_model, 'is_working_day') === false, 'Admin overdue warning must not suppress weekends.');
 
 $croatian_language = readScheduleFile($mirror_pairs['Croatian admin language'][0]);
 $english_language = readScheduleFile($mirror_pairs['English admin language'][0]);
-assertScheduleCondition(strpos($croatian_language, 'Pozovite URL svaki dan prije 08:00') !== false, 'Croatian admin help must describe daily publication.');
-assertScheduleCondition(strpos($english_language, 'Call this URL every day before 08:00') !== false, 'English admin help must describe daily publication.');
+assertScheduleCondition(strpos($croatian_language, 'svaki dan u 00:30') !== false, 'Croatian admin help must describe daily publication.');
+assertScheduleCondition(strpos($english_language, 'run daily at 00:30') !== false, 'English admin help must describe daily publication.');
 
 if ($failed) {
 	exit(1);

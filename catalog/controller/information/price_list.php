@@ -25,19 +25,27 @@ class ControllerInformationPriceList extends Controller {
 			'href' => $this->url->link('information/price_list')
 		);
 
-		$data['publications'] = array();
+		$data['groups'] = array('current' => array(), 'archive' => array());
+		$data['group_titles'] = array('current' => $this->language->get('text_current'), 'archive' => $this->language->get('text_archive'));
 		$publications = $this->model_extension_module_anchor_price->getPublications();
 
 		foreach ($publications as $publication) {
 			$location_code = isset($publication['location_code']) ? $publication['location_code'] : '';
+			$notice = '';
+			if (preg_match('/^naknadno_za_(\d{4}-\d{2}-\d{2})_podaci_(\d{4}-\d{2}-\d{2})_(\d{2})(\d{2})(\d{2})_/', $publication['filename'], $dates)) {
+				$notice = sprintf($this->language->get('text_late_publication'), date('d.m.Y.', strtotime($dates[1])), date('d.m.Y.', strtotime($dates[2])) . ' ' . $dates[3] . ':' . $dates[4]);
+			}
 
-			$data['publications'][] = array(
+			$group = $publication['current'] ? 'current' : 'archive';
+			$parameter = $publication['current'] ? 'location=' . $location_code : 'publication_id=' . (int)$publication['publication_id'];
+			$data['groups'][$group][] = array(
 				'location_code' => $location_code,
 				'location_name' => $location_code === 'PJ1' ? $this->language->get('text_location_pj1') : $this->language->get('text_location_pj3'),
 				'published'     => date($this->language->get('datetime_format'), strtotime($publication['published_at'])),
+				'notice'        => $notice,
 				'product_count' => (int)$publication['product_count'],
 				'filename'      => $publication['filename'],
-				'download'      => $this->url->link('information/price_list/download', 'publication_id=' . (int)$publication['publication_id'])
+				'download'      => $this->url->link('information/price_list/download', $parameter, true)
 			);
 		}
 
@@ -54,7 +62,12 @@ class ControllerInformationPriceList extends Controller {
 	public function download() {
 		$publication_id = isset($this->request->get['publication_id']) ? (int)$this->request->get['publication_id'] : 0;
 		$this->load->model('extension/module/anchor_price');
-		$publication = $this->model_extension_module_anchor_price->getPublication($publication_id, true);
+		$location = $this->request->get['location'] ?? '';
+		if ($location !== '') {
+			$publication = $this->model_extension_module_anchor_price->getCurrentPublication($location);
+		} else {
+			$publication = $this->model_extension_module_anchor_price->getPublication($publication_id, true);
+		}
 
 		if (!$publication) {
 			return $this->notFound();
@@ -68,6 +81,7 @@ class ControllerInformationPriceList extends Controller {
 
 		$filename = basename($publication['filename']);
 		$this->response->setCompression(0);
+		$this->response->addHeader('Cache-Control: no-cache, must-revalidate');
 		$this->response->addHeader('Content-Type: text/csv; charset=utf-8');
 		$this->response->addHeader('Content-Disposition: attachment; filename="' . str_replace('"', '', $filename) . '"');
 		$this->response->addHeader('Content-Length: ' . filesize($path));

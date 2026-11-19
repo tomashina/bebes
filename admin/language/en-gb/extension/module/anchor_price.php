@@ -1,4 +1,14 @@
 <?php
+$_['warning_product_data'] = '%s web shop products require review. A base price is exported once verified.';
+$_['text_product_warnings'] = 'Show products and warning reasons';
+$_['warning_anchor_missing'] = 'Missing anchor price';
+$_['warning_anchor_unconfirmed'] = 'Anchor price is unconfirmed';
+$_['warning_name_missing'] = 'Missing product name';
+$_['warning_model_missing'] = 'Missing model / code';
+$_['warning_manufacturer_missing'] = 'Missing manufacturer / brand';
+$_['warning_ean_invalid'] = 'EAN is not a valid GTIN';
+$_['warning_jan_invalid'] = 'JAN is not a valid GTIN';
+$_['warning_isbn_invalid'] = 'ISBN is not a valid GTIN';
 // Heading
 $_['heading_title'] = 'Anchor prices';
 
@@ -21,7 +31,7 @@ $_['text_success_sync'] = 'Success: %s missing anchor price(s) were created.';
 $_['text_success_publish'] = 'Success: Both price lists were published: %s';
 $_['text_success_settings'] = 'Success: The anchor price settings were saved.';
 $_['text_reference_rule'] = 'Products present on or before 10 September 2026 use 2026-09-10. Later products use their first publication date.';
-$_['text_cron_help'] = 'Call this URL every day before 08:00 Europe/Zagreb and send the key in the X-Anchor-Price-Key HTTP header. It publishes separate PJ1 and PJ3 files from the same product set.';
+$_['text_cron_help'] = 'BBM prepares PJ1 at 00:20. PJ1 and PJ3 run daily at 00:30 (Europe/Zagreb). Republish price changes by 11:00 on the day of the change.';
 $_['text_audit'] = 'Audit trail';
 
 // Columns
@@ -69,10 +79,10 @@ $_['button_download'] = 'Download';
 // Help
 $_['help_reason'] = 'Required. The reason is retained permanently in the audit trail.';
 $_['help_gross_price'] = 'Gross snapshot including tax. Change it only when the retained snapshot itself needs correction.';
-$_['help_default_unit'] = 'Used for all products because this shop has no structured sales-unit field. Default: kom.';
+$_['help_default_unit'] = 'Selling unit for individually sold goods. For measured goods fill the Neto količina and Jedinica mjere attributes.';
 
 // Warnings and errors
-$_['warning_publication_due'] = 'The daily price lists have not both been published by 08:00. Missing: %s.';
+$_['warning_publication_due'] = 'The daily price lists have not both been published by 11:00. Missing: %s.';
 $_['error_permission'] = 'Warning: You do not have permission to modify the Anchor prices module.';
 $_['error_not_installed'] = 'The module tables do not exist. Install the module from Extensions first.';
 $_['error_not_found'] = 'The requested anchor price was not found.';
@@ -83,3 +93,16 @@ $_['error_status'] = 'Select a valid verification status.';
 $_['error_reason'] = 'The reason must contain between 3 and 255 characters.';
 $_['error_default_unit'] = 'The default unit must contain between 1 and 16 characters.';
 $_['error_file_missing'] = 'The publication file is unavailable or has passed its 30-day retention period.';
+$_['entry_history_group'] = 'Goods category';
+$_['text_history_may'] = 'Food, drinks, cosmetics, cleaning products, toiletries and household products';
+$_['text_history_other'] = 'Other goods';
+$_['entry_first_offer'] = 'First offer date';
+$_['entry_reference_sale'] = 'Sale or discount on reference date';
+$_['help_history_amount'] = 'For a sale in the first category, enter the lowest price in the 30 days before the sale began. For other goods enter the previously applied price. Identify the evidence in the reason field.';
+$_['warning_net_quantity'] = 'Check the net quantity and price comparison unit.';
+$_['entry_bbm_password'] = 'BBM password for PJ1';
+$_['help_bbm_password'] = 'Enter only when setting or changing the password for iis_altitudo.';
+
+$_['warning_legacy_history_review'] = 'Review the history behind the previously confirmed price.';
+$_['warning_unit_missing'] = 'Confirm the unit of measure.';
+$_['warning_zero_retail'] = 'Confirm the zero retail price.';

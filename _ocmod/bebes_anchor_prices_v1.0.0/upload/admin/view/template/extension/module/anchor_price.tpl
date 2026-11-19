@@ -30,6 +30,22 @@
     <?php if ($publication_warning) { ?>
     <div class="alert alert-warning"><i class="fa fa-clock-o"></i> <?php echo htmlspecialchars($publication_warning, ENT_QUOTES, 'UTF-8'); ?></div>
     <?php } ?>
+    <?php if ($product_warnings) { ?>
+    <div class="alert alert-warning">
+      <i class="fa fa-exclamation-triangle"></i> <?php echo htmlspecialchars(sprintf($warning_product_data, count($product_warnings)), ENT_QUOTES, 'UTF-8'); ?>
+      <details style="margin-top:10px">
+        <summary><?php echo $text_product_warnings; ?></summary>
+        <div class="table-responsive"><table class="table table-bordered" style="margin-top:10px;background:#fff">
+          <thead><tr><th><?php echo $column_product; ?></th><th><?php echo $column_reason; ?></th><th><?php echo $column_action; ?></th></tr></thead>
+          <tbody><?php foreach ($product_warnings as $warning) { ?><tr>
+            <td><a href="<?php echo $warning['product_edit']; ?>"><?php echo htmlspecialchars($warning['product_name'], ENT_QUOTES, 'UTF-8'); ?></a><br /><small><?php echo htmlspecialchars($warning['code'], ENT_QUOTES, 'UTF-8'); ?> · ID <?php echo (int)$warning['product_id']; ?></small></td>
+            <td><?php echo htmlspecialchars($warning['reasons'], ENT_QUOTES, 'UTF-8'); ?></td>
+            <td><?php if ($warning['anchor_edit']) { ?><a href="<?php echo $warning['anchor_edit']; ?>" class="btn btn-default btn-sm"><?php echo $text_edit; ?></a><?php } ?></td>
+          </tr><?php } ?></tbody>
+        </table></div>
+      </details>
+    </div>
+    <?php } ?>
 
     <div class="alert alert-info">
       <i class="fa fa-info-circle"></i> <?php echo $text_reference_rule; ?>
@@ -40,6 +56,10 @@
       <div class="panel-heading"><h3 class="panel-title"><i class="fa fa-cog"></i> <?php echo $text_settings; ?></h3></div>
       <div class="panel-body">
         <form action="<?php echo $settings_action; ?>" method="post" class="form-horizontal">
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="bbm-password"><?php echo $entry_bbm_password; ?></label>
+            <div class="col-sm-6"><input type="password" name="bbm_password" id="bbm-password" autocomplete="new-password" class="form-control"><p class="help-block"><?php echo $help_bbm_password; ?></p></div>
+          </div>
           <div class="form-group">
             <label class="col-sm-2 control-label" for="input-default-unit"><span data-toggle="tooltip" title="<?php echo htmlspecialchars($help_default_unit, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $entry_default_unit; ?></span></label>
             <div class="col-sm-3"><input type="text" name="default_unit" value="<?php echo htmlspecialchars($default_unit, ENT_QUOTES, 'UTF-8'); ?>" id="input-default-unit" maxlength="16" class="form-control" /></div>

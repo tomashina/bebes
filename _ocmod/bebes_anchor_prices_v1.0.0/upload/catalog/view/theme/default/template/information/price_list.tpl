@@ -16,13 +16,15 @@
     <div id="content" class="<?php echo $class; ?>"><?php echo $content_top; ?>
       <h1><?php echo $heading_title; ?></h1>
       <p><?php echo $text_intro; ?></p>
-      <?php if ($publications) { ?>
+      <?php if (!$groups['current'] && !$groups['archive']) { ?><p><?php echo $text_empty; ?></p><?php } ?>
+      <?php foreach ($groups as $group => $publications) { if (!$publications) continue; ?>
+      <h2><?php echo $group_titles[$group]; ?></h2>
       <div class="table-responsive"><table class="table table-bordered table-hover"><thead><tr><th><?php echo $column_location; ?></th><th><?php echo $column_published; ?></th><th><?php echo $column_products; ?></th><th><?php echo $column_file; ?></th></tr></thead><tbody>
       <?php foreach ($publications as $publication) { ?>
-      <tr><td><strong><?php echo htmlspecialchars($publication['location_code'], ENT_QUOTES, 'UTF-8'); ?></strong> — <?php echo htmlspecialchars($publication['location_name'], ENT_QUOTES, 'UTF-8'); ?></td><td><?php echo htmlspecialchars($publication['published'], ENT_QUOTES, 'UTF-8'); ?></td><td><?php echo (int)$publication['product_count']; ?></td><td><a class="btn btn-primary btn-sm" href="<?php echo $publication['download']; ?>" rel="nofollow"><?php echo $button_download; ?></a><br><small><?php echo htmlspecialchars($publication['filename'], ENT_QUOTES, 'UTF-8'); ?></small></td></tr>
+      <tr><td><strong><?php echo htmlspecialchars($publication['location_code'], ENT_QUOTES, 'UTF-8'); ?></strong> — <?php echo htmlspecialchars($publication['location_name'], ENT_QUOTES, 'UTF-8'); ?></td><td><?php echo htmlspecialchars($publication['published'], ENT_QUOTES, 'UTF-8'); ?><?php if ($publication['notice']) { ?><br><small><?php echo htmlspecialchars($publication['notice'], ENT_QUOTES, 'UTF-8'); ?></small><?php } ?></td><td><?php echo (int)$publication['product_count']; ?></td><td><a class="btn btn-primary btn-sm" href="<?php echo $publication['download']; ?>"><?php echo $button_download; ?></a><br><small><?php echo htmlspecialchars($publication['filename'], ENT_QUOTES, 'UTF-8'); ?></small></td></tr>
       <?php } ?>
       </tbody></table></div>
-      <?php } else { ?><p><?php echo $text_empty; ?></p><?php } ?>
+      <?php } ?>
       <?php echo $content_bottom; ?></div>
     <?php echo $column_right; ?></div>
 </div>

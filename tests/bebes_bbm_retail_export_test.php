@@ -18,14 +18,26 @@ try {
 		throw new Exception('Retail mapping changed.');
 	}
 	foreach (array(
-		array(str_replace('-pj1-', '-pj3-', $filename), $raw),
-		array(str_replace('20261119', '20261118', $filename), $raw),
-		array($filename, str_replace('10.09.2026', '31.09.2026', $raw)),
-		array($filename, $raw . substr($raw, strpos($raw, "\n") + 1))
+		array(str_replace('-pj1-', '-pj3-', $filename), $raw, 'naziv datoteke'),
+		array(str_replace('20261119', '20261118', $filename), $raw, '20261118, očekuje se 20261119'),
+		array($filename, str_replace(';mjera;', ';sifra;', $raw), 'Nedostaju stupci: mjera'),
+		array($filename, str_replace('10.09.2026', '31.09.2026', $raw), 'neispravan datum bazne cijene'),
+		array($filename, $raw . substr($raw, strpos($raw, "\n") + 1), 'ponovljena šifra')
 	) as $invalid) {
 		try { readRetailFixture($temp, $invalid[0], $invalid[1], $today); }
-		catch (RuntimeException $expected) { continue; }
+		catch (RuntimeException $expected) {
+			if (strpos($expected->getMessage(), $invalid[2]) === false) { throw $expected; }
+			continue;
+		}
 		throw new Exception('Invalid BBM export accepted.');
 	}
-} finally { unlink($temp); }
-echo "OK: merchant PJ1 file identity, date, SKU, current sale, barcode, historic base and duplicate protection.\n";
+	$seven = str_replace(array(';mpcijena akcija;', ';32.00;'), ';', $raw);
+	$rows = readRetailFixture($temp, $filename, $seven, $today);
+	if ($rows !== array(array('Test; "artikl"', '000002', '', '', 'kom', '36,90', 'NE', '', '3056560000025', '3056560000025', '35,50'))) { throw new Exception('Seven-column retail mapping changed.'); }
+	$empty_sale = str_replace(';32.00;', ';;', $raw);
+	if (readRetailFixture($temp, $filename, $empty_sale, $today) !== $rows) { throw new Exception('Missing and empty sale columns must be equivalent.'); }
+	$reordered = "sifra;naziv;mjera;mpcijena;barkod;mpcijena bazna datum;mpcijena bazna\n000002;Artikl;KOM;36.90;3056560000025;10.09.2026;35.50\n";
+	$r = readRetailFixture($temp, $filename, $reordered, $today);
+	if ($r[0][1] !== '000002' || $r[0][10] !== '35,50' || $r[0][5] !== '36,90' || $r[0][6] !== 'NE') { throw new Exception('Header order affected seven-column import.'); }
+} finally { if (is_file($temp)) { unlink($temp); } }
+echo "OK: BBM with a sale price, an empty sale column and a missing sale column, identity, date, duplicate and required-field validation.\n";

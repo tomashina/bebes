@@ -84,8 +84,9 @@ class BebesBbmPriceList {
 				throw new RuntimeException('PJ1: ZIP ne sadrži CSV.');
 			}
 			$time = new DateTime('@' . ($modified > 0 ? $modified : $entry['mtime']));
-			if ($time->setTimezone($now->getTimezone())->format('Y-m-d') !== $now->format('Y-m-d')) {
-				throw new RuntimeException('PJ1: datum BBM izvoza ne odgovara današnjem datumu.');
+			$archive_date = $time->setTimezone($now->getTimezone())->format('Y-m-d');
+			if ($archive_date !== $now->format('Y-m-d')) {
+				throw new RuntimeException('PJ1: datum BBM arhive je ' . $archive_date . ', očekuje se ' . $now->format('Y-m-d') . '.');
 			}
 			$file = $zip->getStream($entry['name']);
 			if (!$file) {
@@ -120,16 +121,28 @@ class BebesBbmPriceList {
 
 	private static function readRetailExport($stream, array $header, $filename, DateTime $now) {
 		$expected = array('naziv','sifra','mjera','mpcijena','mpcijena akcija','barkod','mpcijena bazna','mpcijena bazna datum');
-		if (count($header) !== count($expected) || array_diff($expected, $header) ||
-			!preg_match('/^59774997564-prodavaona-nikole_jurisica_8-zagreb-pj1-roba-[0-9]+_([0-9]{8})_[0-9]{6}\.csv$/iD', $filename, $match) ||
-			$match[1] !== $now->format('Ymd')) {
-			throw new RuntimeException('PJ1: datum, identitet prodavaonice ili stupci BBM izvoza nisu valjani.');
+		$has_sale_column = in_array('mpcijena akcija', $header, true);
+		if (!$has_sale_column) {
+			$expected = array_diff($expected, array('mpcijena akcija'));
+		}
+		$missing = array_diff($expected, $header);
+		if ($missing || count($header) !== count($expected)) {
+			$reason = $missing ? ' Nedostaju stupci: ' . implode(', ', $missing) . '.' : '';
+			throw new RuntimeException('PJ1: BBM CSV ima ' . count($header) . ' stupaca, očekuje se ' . count($expected) . '.' . $reason);
+		}
+		if (!preg_match('/^59774997564-prodavaona-nikole_jurisica_8-zagreb-pj1-roba-[0-9]+_([0-9]{8})_[0-9]{6}\.csv$/iD', $filename, $match)) {
+			$name = preg_replace('/[^\p{L}0-9._\/-]/u', '?', mb_substr($filename, 0, 180, 'UTF-8'));
+			throw new RuntimeException('PJ1: naziv datoteke u BBM ZIP-u ne odgovara očekivanom obrascu za PJ1. Primljeno: ' . $name);
+		}
+		if ($match[1] !== $now->format('Ymd')) {
+			throw new RuntimeException('PJ1: datum u nazivu BBM datoteke je ' . $match[1] . ', očekuje se ' . $now->format('Ymd') . '.');
 		}
 		$rows = $seen = array();
 		while (($fields = fgetcsv($stream, 0, ';', '"', "\0")) !== false) {
 			if ($fields === array(null)) { continue; }
 			if (count($fields) !== count($header)) { throw new RuntimeException('PJ1: neispravan broj polja u BBM retku ' . (count($rows) + 2)); }
 			$r = array_combine($header, array_map('trim', $fields));
+			if (!$has_sale_column) { $r['mpcijena akcija'] = ''; }
 			$code = $r['sifra'];
 			if ($r['naziv'] === '' || $code === '' || isset($seen[$code])) { throw new RuntimeException('PJ1: prazna ili ponovljena šifra/naziv u BBM retku ' . (count($rows) + 2)); }
 			$seen[$code] = true;

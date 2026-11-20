@@ -32,6 +32,8 @@ php scripts/bebes_bbm_provjera.php
 
 BBM-ov izvoz sadrži jedan UTF-8 CSV s osam stupaca: naziv, sifra, mjera, mpcijena, mpcijena akcija, barkod, mpcijena bazna i mpcijena bazna datum. Modul provjerava OIB, adresu, PJ1 i datum u imenu datoteke. Neprazna akcijska cijena postaje važeći MPC. Izvorne šifre i barkodovi zadržavaju početne nule. Marka i eksplicitni atributi neto količine mogu se dopuniti iz kataloga trgovca kod jednoznačnog podudaranja. Iznosi za PJ1 dolaze iz BBM-a. Za provjeru spremljenog ZIP-a dodajte njegovu putanju naredbi iznad.
 
+BBM je 20. 11. 2026. dostavio varijantu sa sedam stupaca. Trgovac je potvrdio da izostanak stupca `mpcijena akcija` znači da nema akcijskih cijena. Modul automatski čita obje varijante po zaglavlju. Ako stupac nedostaje ili je prazan, objavljuje `mpcijena` i oznaku NE. Ako je upisana akcijska cijena, objavljuje tu cijenu i oznaku DA. Oba formata moraju imati ostalih sedam stupaca. Cron zapisuje razlog eventualnog odbijanja u privatni dnevnik.
+
 Stvarni raspored i sadržaj zaštićenog BBM izvoza treba potvrditi prvim preuzimanjem. Kod drukčije sheme usporedite zaglavlja i značenje polja s dobavljačem. Ako izvoz sadrži samo šifru i baznu cijenu, za ostale stupce potreban je vjerodostojan izvor PJ1 s odgovarajućim artiklima. Neuspjela prijava, stara datoteka, prazna datoteka ili nepoznata shema vraća pogrešku. Zadnji objavljeni par ostaje dostupan.
 
 ## 4. Zakazani posao

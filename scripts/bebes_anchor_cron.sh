@@ -122,8 +122,18 @@ if [ "$CURL_STATUS" -eq 0 ] && [ "$HTTP_STATUS" = '200' ] && [ -n "$PHP_BIN" ]; 
 fi
 
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S %Z')
-if ! { printf '%s curl_exit=%s http_status=%s json_success=%s\n' \
-	"$TIMESTAMP" "$CURL_STATUS" "${HTTP_STATUS:-000}" "$JSON_SUCCESS" >> "$LOG_FILE"; } 2>/dev/null; then
+BBM_ERROR=''
+if [ "$JSON_SUCCESS" -ne 1 ] && [ -n "$PHP_BIN" ]; then
+	BBM_ERROR=$("$PHP_BIN" -r '
+		$payload = json_decode(stream_get_contents(STDIN), true);
+		$message = $payload["error"] ?? "";
+		if (is_string($message) && strpos($message, "PJ1: ") === 0) {
+			echo " ", preg_replace("/[[:cntrl:]]+/u", " ", mb_substr($message, 0, 450, "UTF-8"));
+		}
+	' < "$RESPONSE_FILE" 2>/dev/null)
+fi
+if ! { printf '%s curl_exit=%s http_status=%s json_success=%s%s\n' \
+	"$TIMESTAMP" "$CURL_STATUS" "${HTTP_STATUS:-000}" "$JSON_SUCCESS" "$BBM_ERROR" >> "$LOG_FILE"; } 2>/dev/null; then
 	printf '%s\n' 'Objava cjenika nije uspjela; provjerite bebes-anchor-cron.log.' >&2
 	exit 1
 fi

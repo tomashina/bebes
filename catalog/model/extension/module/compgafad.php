@@ -60,22 +60,9 @@ class ModelExtensionModulecompgafad extends Model {
 
 			$fb_g_code[] = $this->get_google_consent_code();
 			
-			if($this->setting['gmid']) {
-				$fb_g_code[] = '<!-- Global site tag (gtag.js) - Google Analytics -->
-				<script async src="https://www.googletagmanager.com/gtag/js?id='.($this->setting['gmid']).'"></script>
-				<script>
-				window.dataLayer = window.dataLayer || [];
-				function gtag(){dataLayer.push(arguments);}
-				gtag(\'js\', new Date());';
-				if($this->setting['gmid']) { 
-					$fb_g_code[] = 'gtag(\'config\', \''.$this->setting['gmid'].'\');';
-				}
-				if($this->setting['prch_adwid']) {
-					$fb_g_code[] = 'gtag(\'config\', \''.$this->setting['prch_adwid'].'\', {\'allow_enhanced_conversions\':true});';
-				}
-				$fb_g_code[] = '</script>';
-			}
-			
+			require_once(DIR_SYSTEM . 'library/bebes_google_tag.php');
+			$fb_g_code[] = BebesGoogleTag::pageview(array($this->setting['gmid']), $this->setting['prch_adwid']);
+
 			$src = substr(VERSION,0,3) == '4.0' ? 'extension/compgafad/catalog/view/javascript/compgafad.js' : 'catalog/view/javascript/compgafad.js';
 			
 			$fb_g_code[] = sprintf('<script src="%s" type="text/javascript"></script>',$src);

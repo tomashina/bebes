@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+    <id>Bebes marketing consent for the Facebook Ads Extension</id>
+    <version>1.0.0</version>
+    <vqmver>2.6.0</vqmver>
+    <author>Atelier Bebes</author>
+    <!-- The Facebook OCMOD generates this inline script in the storefront header. -->
+    <file name="catalog/view/theme/*/template/common/header.tpl">
+        <operation error="log">
+            <!-- Replace the opening script tag and IIFE. Keep the extension's SDK and event data. -->
+            <search position="replace" offset="-2" regex="true"><![CDATA[~^\s*!function\(f,b,e,v,n,t,s\)\{if\(f\.fbq\)return;.*$~]]></search>
+            <add><![CDATA[<script type="text/plain" data-category="marketing">
+          (function() {
+$0]]></add>
+        </operation>
+        <operation error="log">
+            <!-- CookieConsent owns the choice and the SDK consent state. -->
+            <search><![CDATA[var enableCookieBar = '<?= $facebook_enable_cookie_bar ?>';]]></search>
+            <add><![CDATA[var enableCookieBar = 'false';]]></add>
+        </operation>
+        <operation error="log">
+            <search><![CDATA["catalog/view/javascript/facebook/facebook_pixel.js"]]></search>
+            <add><![CDATA["catalog/view/javascript/facebook/facebook_pixel.js?v=consent-1"]]></add>
+        </operation>
+    </file>
+</modification>

@@ -5,40 +5,12 @@ class ModelExtensioncompgafad extends Model {
 		ini_set("serialize_precision", -1);
  	}	
 	public function pageview() {
-		if($this->config->get('config_compgafad')) {
-			
-$gcode = '';
-
-if($this->config->get('config_compgafad_gid')) { 
-	$gcode = '<!-- Global site tag (gtag.js) - Google Analytics -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id='.$this->config->get('config_compgafad_gid').'"></script>
-	<script>
-	window.dataLayer = window.dataLayer || [];
-	function gtag(){dataLayer.push(arguments);}
-	gtag(\'js\', new Date());
-	gtag(\'config\', \''.$this->config->get('config_compgafad_gid').'\');';
-	if($this->config->get('config_compgafad_gmid')) { 
-		$gcode .= 'gtag(\'config\', \''.$this->config->get('config_compgafad_gmid').'\');';
-	}
-	if($this->config->get('config_compgafad_awid') && $this->config->get('config_compgafad_awlbl')) {
-		$gcode .= 'gtag(\'config\', \''.$this->config->get('config_compgafad_awid').'\', {\'allow_enhanced_conversions\':true});';
-	}
-	$gcode .= '</script>'; 
-} elseif($this->config->get('config_compgafad_gmid')) { 
-	$gcode = '<!-- Global site tag (gtag.js) - Google Analytics -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id='.$this->config->get('config_compgafad_gmid').'"></script>
-	<script>
-	window.dataLayer = window.dataLayer || [];
-	function gtag(){dataLayer.push(arguments);}
-	gtag(\'js\', new Date());
-	gtag(\'config\', \''.$this->config->get('config_compgafad_gmid').'\');';
-	if($this->config->get('config_compgafad_awid') && $this->config->get('config_compgafad_awlbl')) {
-		$gcode .= 'gtag(\'config\', \''.$this->config->get('config_compgafad_awid').'\', {\'allow_enhanced_conversions\':true});';
-	}
-	$gcode .= '</script>'; 
-}
-
-return $gcode;
+		if ($this->config->get('config_compgafad')) {
+			require_once(DIR_SYSTEM . 'library/bebes_google_tag.php');
+			return BebesGoogleTag::pageview(
+				array($this->config->get('config_compgafad_gid'), $this->config->get('config_compgafad_gmid')),
+				$this->config->get('config_compgafad_awlbl') ? $this->config->get('config_compgafad_awid') : ''
+			);
 		}
 	}
 	public function login() {

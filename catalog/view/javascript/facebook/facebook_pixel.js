@@ -5,18 +5,32 @@
 // LICENSE file in the root directory of this source tree.
 
 ; (function(facebookAdsExtension, window, document, undefined) {
+  function hasMarketingConsent() {
+    return window.CookieConsent && window.CookieConsent.acceptedCategory('marketing');
+  }
+
   var facebookPixel =
     facebookAdsExtension.facebookPixel =
     facebookAdsExtension.facebookPixel || (function () {
     var init = function(facebook_pixel_id, pii, params) {
-      fbq('init', facebook_pixel_id, pii, params);
-      fbq('track', 'PageView');
+      function initWhenAllowed() {
+        if (!hasMarketingConsent()) {
+          // Consent may have been withdrawn while this script was loading.
+          window.addEventListener('cc:onChange', initWhenAllowed);
+          return;
+        }
+        window.removeEventListener('cc:onChange', initWhenAllowed);
+        fbq('init', facebook_pixel_id, pii, params);
+        fbq('trackSingle', facebook_pixel_id, 'PageView');
+      }
+      initWhenAllowed();
     };
 
     var firePixel = function(facebook_pixel_event_params) {
-      event_name = facebook_pixel_event_params.event_name;
+      if (!hasMarketingConsent()) return;
+      var event_name = facebook_pixel_event_params.event_name;
       delete facebook_pixel_event_params.event_name;
-      track_param =
+      var track_param =
         facebook_pixel_event_params.is_custom_event ? 'trackCustom' : 'track';
       delete facebook_pixel_event_params.is_custom_event;
       fbq(track_param, event_name, facebook_pixel_event_params);
@@ -27,10 +41,9 @@
       firePixel: firePixel
     };
   }());
-}(window._facebookAdsExtension = window._facebookAdsExtension || {}, window, document));
 
-(function () {
   function fireProductInfoEvent(eventName, productID, quantity) {
+    if (!hasMarketingConsent()) return;
     jQuery.get(
       'index.php?route=extension/facebookproduct/getproductinfoforfacebookpixel',
       {
@@ -40,7 +53,7 @@
       },
         function (json) {
         if (json.facebook_pixel_event_params_FAE) {
-          _facebookAdsExtension.facebookPixel.firePixel(
+          facebookPixel.firePixel(
             json.facebook_pixel_event_params_FAE);
         }
       }
@@ -90,4 +103,4 @@
       console.log('wishlist variable is not available, AddToWishlist event is not able to be fired');
     }
   });
-})();
+}(window._facebookAdsExtension = window._facebookAdsExtension || {}, window, document));
